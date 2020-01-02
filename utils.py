@@ -15,3 +15,24 @@ def highlight(text, match, output=False):
         print(highlighted)
     else:
         return highlighted
+
+
+def default_answer(did, answer_module, atext='', score=0.0):
+    ans = []
+
+    for qid in did['QUESTIONS']:
+        ans.append(
+            [
+                default_acand(answer_module, atext, score)
+            ]
+        )
+
+    return ans
+
+
+def default_acand(answer_module, atext, score):
+    return {
+        'AMODULE': answer_module,
+        'ATEXT': atext,
+        'score': score
+     }

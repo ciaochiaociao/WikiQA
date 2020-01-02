@@ -5,7 +5,7 @@ from opencc import OpenCC
 cc3 = OpenCC('s2t')
 cc2 = OpenCC('s2tw')
 cc = OpenCC('s2twp')
-host = '140.109.19.51'
+host = '140.109.19.51'  #localhost
 port = '27020'
 
 client = MongoClient('mongodb://{}:{}'.format(host, port))

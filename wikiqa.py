@@ -5,12 +5,13 @@ import logging
 import regex
 from stanfordnlp.protobuf import NERMention, Token
 
-from utils import highlight
+from utils import *
 from wikidata4fgc_v2 import *
 from stanfordnlp.server import CoreNLPClient
 import json
 import re
 from pandas import pandas as pd
+from os.path import join, abspath, dirname
 
 # fix bug: google.protobuf.message.DecodeError: Error parsing message
 # ref: https://github.com/stanfordnlp/stanfordnlp/issues/154
@@ -70,328 +71,344 @@ prediction_results = []
 
 
 class WikiQA:
-    def __init__(self):
-        self.corenlp_ip = 'http://140.109.19.51:9000'
-        self.if_evaluate = True
+    def __init__(self, server='http://140.109.19.191:9000'):
+        # 'http://localhost:9000'
+        self.corenlp_ip = server
+        self.if_evaluate = False  # evaluate the performance
 
-    def predict(self, fgc_data):
+        cur_path = dirname(abspath(__file__))
+        with open(join(cur_path, 'fgc_knowledgebase.json'), 'r', encoding='utf-8') as f:
+            self.kbqa_sheet = json.load(f)
+
+    def predict(self, fgc_data, save_result=False, fgc_kb=True):
         global nlp
         with CoreNLPClient(endpoint=self.corenlp_ip, annotators="tokenize,ssplit,lemma,pos,ner",
                             start_server=False, properties='chinese') as nlp:
-            return self._predict(fgc_data)
+            return self._predict(fgc_data, save_result, fgc_kb)
 
-    def _predict(self, fgc_data, save_result=True):
+    def _get_from_fgc_kb(self, qtext):
+        if qtext in self.kbqa_sheet:
+            return self.kbqa_sheet[qtext]
+
+    def _predict(self, item, save_result, fgc_kb):
         global q, wd_item, rel, attr, predicate_matched, nlp_data, passage_data, mentions_bracketed, \
             dtext, answers, if_evaluate, qtext, ent_link_query, debug_info
+
+        # if the gold answer provided for checking performance
         if_evaluate = self.if_evaluate
+
+        # for debugging
         attribute_match_count = 0
-        all_answers = []
         debug_infos = []
-        for item in fgc_data:
-            # debug run
-            # testqids = ['D275Q01', 'D293Q01', 'D305Q01', 'D305Q08', 'D293Q08']
-            # testqids = ['D247Q09']
-            # if item['DID'] not in [testqid.split('Q')[0] for testqid in testqids]:
-            #     continue
-            # print
-            # dtext = item['DTEXT_CN']
-            # passage_data = nlp.annotate(dtext, properties={'pipelineLanguage': 'zh', 'regexner.mapping': 'ner_mapping'})
-            # print('did:', item['DID'])
-            # print('original text (hant):', item['DTEXT'])
-            # print('tokenized passage (hans):')
+        did_shown = []
+
+        dtext = item['DTEXT']
+        passage_data = nlp.annotate(dtext, properties={'pipelineLanguage': 'zh'})
+
+        all_answers = []
+        # region questions for-loop [{'QID': ...}, {'QID': ...}, ...]
+        for q in item['QUESTIONS']:
+
+            if fgc_kb:
+                matched = self._get_from_fgc_kb(q['QTEXT'])
+                if matched is not None:
+                    # q_anses = default_answer(q['DID'], 'Wiki-Kb-Inference', _match(q['ATEXT']), 1.0)
+                    q_anses = [{
+                        # 'QID': q['QID'],
+                        'AMODULE': 'Wiki-Json-Inference',
+                        'ATEXT': matched,
+                        'score': 1.0
+                    }]
+                    all_answers.append(q_anses)
+                    continue
+
+            if q['AMODE'] == 'Yes-No':
+                continue
+            if q['ATYPE'] in ['Object']:
+                continue
+
+            # for debugging
+            if item['DID'] not in did_shown:
+                # print('did:', item['DID'])
+                # print('original text (hant):', item['DTEXT'])
+                # print('tokenized passage (hans):')
+                did_shown.append(item['DID'])
+
             # for sent in passage_data.sentence:
             #     print(f'sent{sent.sentenceIndex}:', end=' ')
             #     for tok in sent.token:
             #         print(tok.originalText, end=' ')
             # print('\n')
-            did_shown = []
-            for q in item['QUESTIONS']:
-                if q['AMODE'] == 'Yes-No':
+            # debug run
+            # if q['QID'] not in testqids:
+            #     continue
+            if if_evaluate:
+                answers = [a['ATEXT_CN'] for a in q['ANSWER']]
+            else:
+                answers = UNKNOWN_MESSAGE
+            # print(q['QID'])
+            qtext = q['QTEXT_CN']
+            # props={'annotators': 'tokenize,ssplit,pos,ner','pipelineLanguage':'zh','outputFormat':'json'}
+
+            nlp_data = nlp.annotate(qtext,
+                                    properties={'pipelineLanguage': 'zh', 'annotators': "tokenize,lemma,pos,ner"})
+            # TODO: BUGFIX: still doing ssplit!!!!!
+            # note: don't add ssplit because there is a bug in CoreNLP: the NERMention tokenStartInSentenceInclusive
+            # uses the location index in the original text without sentence split rather than with split even with
+            # ssplit annotator on
+
+            # print('tokenized_question:', *[token.originalText for sent in nlp_data.sentence for token in sent.token],
+            #       sep=' ', end='')
+            # print(answers)
+            # mentions = [mention for mention in nlp_data.mentions if mention.entityType]
+            # print('unfiltered', [mention.entityMentionText for mention in mentions])
+
+            # questions without any mentions
+            # if not len(mentions):
+            #     print(text)
+            #     input()
+
+            # rule 1-1: filtering out 'NUMBER', 'DATE', 'ORDINAL', 'MONEY', 'TIME', 'PERCENT' Entity Mention
+            # mentions = [mention for mention in mentions if
+            #             mention.entityType not in ['NUMBER', 'DATE', 'ORDINAL', 'MONEY', 'TIME', 'PERCENT', 'EMAIL',
+            #                                        'URL']]
+            #
+            # print('filtered mentions:', [mention.entityMentionText for mention in mentions])
+            #
+            # if not len(mentions):
+            #     no_qs_wo_ems += 1
+
+            # rule 1-2: add Proper Nouns to the entity linking query set
+            # sid_and_tokens_nr = [(sid, tok) for sid, sent in enumerate(nlp_data.sentence) for tok in sent.token if tok.pos == 'NR']
+            # rule 1-3: further find mentions bracketed (max length 9)
+            # finditer() returns iterator of `MatchObject`s while findall() returns list of tuples
+            # matches = list(re.finditer(r'[<‹«《〈〔「『【〖"](.{1,9})[>›»》〉〕」』】〗"]', qtext))
+            # mentions_bracketed = [(match[1], match.span(1)) for match in matches]  # save string and (tok_b, tok_e)
+
+            # rule 1-4: expand the query text set from the original query with multi-gram techniques
+            # build queries for entity linking
+            # ent_link_cands = [gram for mention in mentions for gram in
+            #                   expand_with_multi_gram(mention, nlp_data.sentence, mention.sentenceIndex, n_grams=3) +
+            #                   expand_with_multi_gram(mention, nlp_data.sentence, mention.sentenceIndex, n_grams=2)] + \
+            #                  [gram for sid, token in sid_and_tokens_nr for gram in
+            #                    expand_with_multi_gram(token, nlp_data.sentence, sid, n_grams=3) +
+            #                     expand_with_multi_gram(token, nlp_data.sentence, sid, n_grams=2)] + \
+            #                  mentions + mentions_bracketed
+
+            # rule 1-5: followed by '的' + Noun => second hop on that Noun
+            # ent_link_cands_2nd_hop = followed_by_2nd_hop_cands(ent_link_cands, nlp_data)
+
+            answers_from_ent_link_queries = []  # answers_from_one_question
+
+            shown = set()
+            debug_info = {}
+            debug_infos.append(debug_info)
+            debug_info.update({'QID': q['QID'],
+                               'QTEXT': qtext,
+                               'ATYPE': q['ATYPE'],
+                               'AMODE': q['AMODE'],
+                               })
+
+            parsed_result = parse_question(qtext)
+            if parsed_result:
+                name, attr, span, matched_pattern = parsed_result
+                # print('[matched pattern]name, attr, span, matched_pattern:', name, attr, span, matched_pattern)
+            else:
+                continue
+            mentions = list(get_ent_from_tok_b_e(nlp_data.mentions, span))
+            ent_link_cands = [name]
+            if '.' in name:
+                ent_link_cands.append(''.join(name.split('.')))
+            if '·' in name:
+                ent_link_cands.append(''.join(name.split('·')))
+            if mentions:
+                ent_link_cands.extend(mentions)
+
+            for ix, ent_link_cand in enumerate(ent_link_cands):
+                ent_link_query = _get_text_from_token_entity_comp(ent_link_cand)
+                if ent_link_query in shown:  # skip duplicate
                     continue
-                if q['ATYPE'] in ['Object']:
-                    continue
+                shown.add(ent_link_query)
+                # print(f'ent_link query {ix}: {ent_link_query}')
+                # print()
+                debug_info.update({'ent_link_query': ent_link_query})
 
-                if item['DID'] not in did_shown:
-                    dtext = item['DTEXT_CN']
-                    passage_data = nlp.annotate(dtext,
-                                                properties={'pipelineLanguage': 'zh', 'regexner.mapping': 'ner_mapping'})
-                    # print('did:', item['DID'])
-                    # print('original text (hant):', item['DTEXT'])
-                    # print('tokenized passage (hans):')
-                    did_shown.append(item['DID'])
+                # ============================================================ ent_link_cand
 
-                # for sent in passage_data.sentence:
-                #     print(f'sent{sent.sentenceIndex}:', end=' ')
-                #     for tok in sent.token:
-                #         print(tok.originalText, end=' ')
-                # print('\n')
-                # debug run
-                # if q['QID'] not in testqids:
-                #     continue
-                if if_evaluate:
-                    answers = [a['ATEXT_CN'] for a in q['ANSWER']]
-                else:
-                    answers = UNKNOWN_MESSAGE
-                # print(q['QID'])
-                qtext = q['QTEXT_CN']
-                # props={'annotators': 'tokenize,ssplit,pos,ner','pipelineLanguage':'zh','outputFormat':'json'}
+                # -------------------------------------------
+                # rule 1: Entity Linking - get item from Wikidata
+                ent_link_query = _get_text_from_token_entity_comp(ent_link_cand)
 
-                nlp_data = nlp.annotate(qtext,
-                                        properties={'pipelineLanguage': 'zh', 'annotators': "tokenize,lemma,pos,ner"})
-                # TODO: BUGFIX: still doing ssplit!!!!!
-                # note: don't add ssplit because there is a bug in CoreNLP: the NERMention tokenStartInSentenceInclusive
-                # uses the location index in the original text without sentence split rather than with split even with
-                # ssplit annotator on
+                wd_items = get_dicts_from_keyword(ent_link_query)
+                # clean wikidata item and simplify wikidata item
+                wd_items = [readable(filter_claims_in_dict(d)) for d in wd_items]
 
-                # print('tokenized_question:', *[token.originalText for sent in nlp_data.sentence for token in sent.token],
-                #       sep=' ', end='')
-                # print(answers)
-                # mentions = [mention for mention in nlp_data.mentions if mention.entityType]
-                # print('unfiltered', [mention.entityMentionText for mention in mentions])
+                # rest_tokens = [token for sent in nlp_data.sentence for token in sent.token if
+                #                token.tokenBeginIndex < _get_tok_b_e_from_token_entity_comp(ent_link_cand)[0] or
+                #                token.tokenBeginIndex >= _get_tok_b_e_from_token_entity_comp(ent_link_cand)[1]]
+                # rest_text = ' '.join([token.originalText for token in rest_tokens])
+                # print('mention', mention.entityMentionText, 'rest', ' '.join([token.originalText for token in rest_tokens]))
+                # loop thourgh all results from wikidata API
 
-                # questions without any mentions
-                # if not len(mentions):
-                #     print(text)
-                #     input()
-
-                # rule 1-1: filtering out 'NUMBER', 'DATE', 'ORDINAL', 'MONEY', 'TIME', 'PERCENT' Entity Mention
-                # mentions = [mention for mention in mentions if
-                #             mention.entityType not in ['NUMBER', 'DATE', 'ORDINAL', 'MONEY', 'TIME', 'PERCENT', 'EMAIL',
-                #                                        'URL']]
-                #
-                # print('filtered mentions:', [mention.entityMentionText for mention in mentions])
-                #
-                # if not len(mentions):
-                #     no_qs_wo_ems += 1
-
-                # rule 1-2: add Proper Nouns to the entity linking query set
-                # sid_and_tokens_nr = [(sid, tok) for sid, sent in enumerate(nlp_data.sentence) for tok in sent.token if tok.pos == 'NR']
-                # rule 1-3: further find mentions bracketed (max length 9)
-                # finditer() returns iterator of `MatchObject`s while findall() returns list of tuples
-                # matches = list(re.finditer(r'[<‹«《〈〔「『【〖"](.{1,9})[>›»》〉〕」』】〗"]', qtext))
-                # mentions_bracketed = [(match[1], match.span(1)) for match in matches]  # save string and (tok_b, tok_e)
-
-                # rule 1-4: expand the query text set from the original query with multi-gram techniques
-                # build queries for entity linking
-                # ent_link_cands = [gram for mention in mentions for gram in
-                #                   expand_with_multi_gram(mention, nlp_data.sentence, mention.sentenceIndex, n_grams=3) +
-                #                   expand_with_multi_gram(mention, nlp_data.sentence, mention.sentenceIndex, n_grams=2)] + \
-                #                  [gram for sid, token in sid_and_tokens_nr for gram in
-                #                    expand_with_multi_gram(token, nlp_data.sentence, sid, n_grams=3) +
-                #                     expand_with_multi_gram(token, nlp_data.sentence, sid, n_grams=2)] + \
-                #                  mentions + mentions_bracketed
-
-                # rule 1-5: followed by '的' + Noun => second hop on that Noun
-                # ent_link_cands_2nd_hop = followed_by_2nd_hop_cands(ent_link_cands, nlp_data)
-
-                answers_from_ent_link_queries = []  # answers_from_one_question
-
-                shown = set()
-                debug_info = {}
-                debug_infos.append(debug_info)
-                debug_info.update({'QID': q['QID'],
-                                   'QTEXT': qtext,
-                                   'ATYPE': q['ATYPE'],
-                                   'AMODE': q['AMODE'],
-                                   })
-
-                parsed_result = parse_question(qtext)
-                if parsed_result:
-                    name, attr, span, matched_pattern = parsed_result
-                    # print('[matched pattern]name, attr, span, matched_pattern:', name, attr, span, matched_pattern)
-                else:
-                    continue
-                mentions = list(get_ent_from_tok_b_e(nlp_data.mentions, span))
-                ent_link_cands = [name]
-                if '.' in name:
-                    ent_link_cands.append(''.join(name.split('.')))
-                if '·' in name:
-                    ent_link_cands.append(''.join(name.split('·')))
-                if mentions:
-                    ent_link_cands.extend(mentions)
-
-                for ix, ent_link_cand in enumerate(ent_link_cands):
-                    ent_link_query = _get_text_from_token_entity_comp(ent_link_cand)
-                    if ent_link_query in shown:  # skip duplicate
-                        continue
-                    shown.add(ent_link_query)
-                    # print(f'ent_link query {ix}: {ent_link_query}')
+                # get all datavalues from all relations of all wd_items from one ent_link_query
+                wd_item_rel_datavalues_matched_tuples = []
+                for ix, wd_item in enumerate(wd_items):
+                    # print(f'obtained wikidata item {ix} {wd_item["id"]} {get_fallback_zh_label_from_dict(wd_item)}')
+                    # all_rels = [set(rel_labels) | set(rel_aliases) for rel_labels, rel_aliases in
+                    #             wd_item['claims'].keys()]
+                    # all_rels = [str(ix) + ':' + ' '.join(rel) for ix, rel in enumerate(all_rels)]
+                    # print(all_rels)
                     # print()
-                    debug_info.update({'ent_link_query': ent_link_query})
-
-                    # ============================================================ ent_link_cand
-
-                    # -------------------------------------------
-                    # rule 1: Entity Linking - get item from Wikidata
-                    ent_link_query = _get_text_from_token_entity_comp(ent_link_cand)
-
-                    wd_items = get_dicts_from_keyword(ent_link_query)
-                    # clean wikidata item and simplify wikidata item
-                    wd_items = [readable(filter_claims_in_dict(d)) for d in wd_items]
-
-                    # rest_tokens = [token for sent in nlp_data.sentence for token in sent.token if
-                    #                token.tokenBeginIndex < _get_tok_b_e_from_token_entity_comp(ent_link_cand)[0] or
-                    #                token.tokenBeginIndex >= _get_tok_b_e_from_token_entity_comp(ent_link_cand)[1]]
-                    # rest_text = ' '.join([token.originalText for token in rest_tokens])
-                    # print('mention', mention.entityMentionText, 'rest', ' '.join([token.originalText for token in rest_tokens]))
-                    # loop thourgh all results from wikidata API
-
-                    # get all datavalues from all relations of all wd_items from one ent_link_query
-                    wd_item_rel_datavalues_matched_tuples = []
-                    for ix, wd_item in enumerate(wd_items):
-                        # print(f'obtained wikidata item {ix} {wd_item["id"]} {get_fallback_zh_label_from_dict(wd_item)}')
-                        # all_rels = [set(rel_labels) | set(rel_aliases) for rel_labels, rel_aliases in
-                        #             wd_item['claims'].keys()]
-                        # all_rels = [str(ix) + ':' + ' '.join(rel) for ix, rel in enumerate(all_rels)]
-                        # print(all_rels)
-                        # print()
-                        debug_info.update({
-                                'wd_item': wd_item['id'],
-                                'wd_item_name': get_fallback_zh_label_from_dict(wd_item)
-                                })
-
-                        # match predicates
-                        # old version: rel_datavalues_matched_tuples = self.get_values_from_matched_predicate(wd_item, rest_text)
-                        # new version:
-                        def _get_value_from_attr_and_wd_item(wd_item, attr):
-                            if attr == '名字':
-                                aliases = get_all_aliases_from_dict(wd_item)
-                                yield (('名字'), ), aliases[0] + aliases[1]
-                            for rel, datavalues in wd_item['claims'].items():
-                                labels, _ = rel
-                                for label in labels:
-                                    if label == attr:
-                                        # print('matched - rel, datavalues', rel, datavalues)
-                                        yield attr, datavalues
-
-                        rel_datavalues_matched_tuples = list(_get_value_from_attr_and_wd_item(wd_item, attr))
-
-                        # print('rel, datavalues:', rel_datavalues_matched_tuples)
-                        if not rel_datavalues_matched_tuples:
-                            continue
-                        wd_item_rel_datavalues_matched_tuples.append((wd_item, rel_datavalues_matched_tuples))
-
-                    # ------------------------------------------- wd_item_rel_datavalues_matched_tuples
-
-
-                    answers_from_wd_items = []  # answers_from_one_ent_link_query
-                    for wd_item, rel_datavalues_matched_tuples in wd_item_rel_datavalues_matched_tuples:
-
-                        answers_from_rels = []  # answers_from_one_wd_item
-                        for rel, datavalues in rel_datavalues_matched_tuples:
-
-                            # print('-------------------------------------------------')
-                            # print(f'labels of attributes matched the question text\n' +
-                            #       'ent_link_query: {} | attr: {} | values: {} | answers: {}'.format(
-                            #           ent_link_query, attr, datavalues,
-                            #           answers))
-                            # TODO
-                            debug_info.update({
+                    debug_info.update({
+                            'wd_item': wd_item['id'],
+                            'wd_item_name': get_fallback_zh_label_from_dict(wd_item)
                             })
 
-                            attribute_match_count += 1
+                    # match predicates
+                    # old version: rel_datavalues_matched_tuples = self.get_values_from_matched_predicate(wd_item, rest_text)
+                    # new version:
+                    def _get_value_from_attr_and_wd_item(wd_item, attr):
+                        if attr == '名字':
+                            aliases = get_all_aliases_from_dict(wd_item)
+                            yield (('名字'), ), aliases[0] + aliases[1]
+                        for rel, datavalues in wd_item['claims'].items():
+                            labels, _ = rel
+                            for label in labels:
+                                if label == attr:
+                                    # print('matched - rel, datavalues', rel, datavalues)
+                                    yield attr, datavalues
 
-                            answers_from_datavalues = []  # answers_from_one_rel
+                    rel_datavalues_matched_tuples = list(_get_value_from_attr_and_wd_item(wd_item, attr))
 
-                            # predicted_answers
-                            for dvalue_comp in preprocess_values(datavalues):
-                                answers_from_one_datavalue = generate_answers_from_datavalue(dvalue_comp, q, dtext)
-                                # output answers
-                                answers_from_datavalues.extend(answers_from_one_datavalue)
+                    # print('rel, datavalues:', rel_datavalues_matched_tuples)
+                    if not rel_datavalues_matched_tuples:
+                        continue
+                    wd_item_rel_datavalues_matched_tuples.append((wd_item, rel_datavalues_matched_tuples))
 
-                            # evaluation
-                            if save_result:
-                                for dvalue_comp in answers_from_datavalues:
-                                    ans_cand = dvalue_comp
-                                    if if_evaluate:
-                                        prediction_result = evaluate(dtext, ans_cand, answers)
-                                    else:
-                                        prediction_result = UNKNOWN_MESSAGE
-                                    # save results
-                                    save_results(prediction_result, ans_cand, None)
+                # ------------------------------------------- wd_item_rel_datavalues_matched_tuples
 
-                            # print('answers_from_datavalues', answers_from_datavalues)
-                            answers_from_rels.extend(answers_from_datavalues)
-                        # print('answers_from_rels', answers_from_rels)
-                        answers_from_wd_items.extend(answers_from_rels)
-                    # print('answers_from_wd_items', answers_from_wd_items)
 
-                    # ============================================================
+                answers_from_wd_items = []  # answers_from_one_ent_link_query
+                for wd_item, rel_datavalues_matched_tuples in wd_item_rel_datavalues_matched_tuples:
 
-                    answers_from_ent_link_queries.extend(answers_from_wd_items)
-                # print(f'answers_from_ent_link_queries {q["QID"]}: {answers_from_ent_link_queries}')
+                    answers_from_rels = []  # answers_from_one_wd_item
+                    for rel, datavalues in rel_datavalues_matched_tuples:
 
-                def filter_answers(answers):
-                    # rule 5: filter out duplicate answers -> deprecated
-                    # return list(set(answers))
-                    # answer
-                    # return [for answer in answers]
-                    results = []
-                    for answer in answers:
-                        if answer not in qtext:
-                            results.append(answer)
-                    return results
+                        # print('-------------------------------------------------')
+                        # print(f'labels of attributes matched the question text\n' +
+                        #       'ent_link_query: {} | attr: {} | values: {} | answers: {}'.format(
+                        #           ent_link_query, attr, datavalues,
+                        #           answers))
+                        # TODO
+                        debug_info.update({
+                        })
 
-                # def transform_answers(answers):
-                #     # rule 5-2: output tokens in passage, recover date loss
-                #     def _check(t):
-                #         return ('年' in qtext, '月' in qtext, '日' in qtext or '号' in qtext)
-                #
-                #     has_year, has_month, has_day = _check(qtext)
-                #     for answer in answers:
-                #         has_year_ans, has_month_ans, has_day_ans = _check(answer)
-                #         year, month, day = answer.match('(\D*)(\d*)年(\d)月()(日|号)').groups()
-                #         result = ''
-                #         if has_year:
-                #             year
-                #             if has_month:
-                #                 if has_day:
-                #
-                #                     if has_year_ans and has_month_ans and has_day_ans:
-                #                         return answer
-                #                 if has_year_ans and has_month_ans and has_day_ans:
-                #                     return answer
-                #     for answer in answers:
-                #
-                #     pass
+                        attribute_match_count += 1
 
-                final_answers = list(filter_answers(answers_from_ent_link_queries))
+                        answers_from_datavalues = []  # answers_from_one_rel
 
-                # transfer to FGC output api format
+                        # predicted_answers
+                        for dvalue_comp in preprocess_values(datavalues):
+                            answers_from_one_datavalue = generate_answers_from_datavalue(dvalue_comp, q, dtext)
+                            # output answers
+                            answers_from_datavalues.extend(answers_from_one_datavalue)
 
-                # for ans in final_answers:
-                #     q_anses.append({
-                #         'QID': q['QID'],
-                #         # 'QTEXT': qtext,  # for debugging
-                #         'AMODULE': 'WikiQA',
-                #         'ATEXT': ans,
-                #         'score': None,  # TODO
-                #         'start_score': 0,
-                #         'end_score': 0,
-                #         # 'gold': answers  # for debugging
-                #     })
+                        # evaluation
+                        if save_result:
+                            for dvalue_comp in answers_from_datavalues:
+                                ans_cand = dvalue_comp
+                                if if_evaluate:
+                                    prediction_result = evaluate(dtext, ans_cand, answers)
+                                else:
+                                    prediction_result = UNKNOWN_MESSAGE
+                                # save results
+                                save_results(prediction_result, ans_cand, None)
 
-                if final_answers:
-                    q_anses = [{
-                        'QID': q['QID'],
-                        # 'QTEXT': qtext,  # for debugging
-                        'AMODULE': 'WikiQA',
-                        'ATEXT': max(final_answers, key=len),
-                        'score': None,  # TODO
-                        'start_score': 0,
-                        'end_score': 0,
-                        # 'gold': answers  # for debugging
-                    }]
-                if q_anses:
-                    all_answers.append(q_anses)
+                        # print('answers_from_datavalues', answers_from_datavalues)
+                        answers_from_rels.extend(answers_from_datavalues)
+                    # print('answers_from_rels', answers_from_rels)
+                    answers_from_wd_items.extend(answers_from_rels)
+                # print('answers_from_wd_items', answers_from_wd_items)
+
+                # ============================================================
+
+                answers_from_ent_link_queries.extend(answers_from_wd_items)
+            # print(f'answers_from_ent_link_queries {q["QID"]}: {answers_from_ent_link_queries}')
+
+            def filter_answers(answers):
+                # rule 5: filter out duplicate answers -> deprecated
+                # return list(set(answers))
+                # answer
+                # return [for answer in answers]
+                results = []
+                for answer in answers:
+                    if answer not in qtext:
+                        results.append(answer)
+                return results
+
+            # def transform_answers(answers):
+            #     # rule 5-2: output tokens in passage, recover date loss
+            #     def _check(t):
+            #         return ('年' in qtext, '月' in qtext, '日' in qtext or '号' in qtext)
+            #
+            #     has_year, has_month, has_day = _check(qtext)
+            #     for answer in answers:
+            #         has_year_ans, has_month_ans, has_day_ans = _check(answer)
+            #         year, month, day = answer.match('(\D*)(\d*)年(\d)月()(日|号)').groups()
+            #         result = ''
+            #         if has_year:
+            #             year
+            #             if has_month:
+            #                 if has_day:
+            #
+            #                     if has_year_ans and has_month_ans and has_day_ans:
+            #                         return answer
+            #                 if has_year_ans and has_month_ans and has_day_ans:
+            #                     return answer
+            #     for answer in answers:
+            #
+            #     pass
+
+            final_answers = list(filter_answers(answers_from_ent_link_queries))
+
+            # transfer to FGC output api format
+
+            # for ans in final_answers:
+            #     q_anses.append({
+            #         'QID': q['QID'],
+            #         # 'QTEXT': qtext,  # for debugging
+            #         'AMODULE': 'WikiQA',
+            #         'ATEXT': ans,
+            #         'score': None,  # TODO
+            #         'start_score': 0,
+            #         'end_score': 0,
+            #         # 'gold': answers  # for debugging
+            #     })
+
+            if final_answers:
+                q_anses = [{
+                    # 'QID': q['QID'],
+                    # 'QTEXT': qtext,  # for debugging
+                    'AMODULE': 'Wiki-Kb-Inference',
+                    'ATEXT': max(final_answers, key=len),
+                    'score': 1.0,
+                    'start_score': 0,
+                    'end_score': 0,
+                    # 'gold': answers  # for debugging
+                }]
+            if q_anses:
+                all_answers.append(q_anses)
 
             # break  # for a pilot run
+        # endregion questions for-loop
+
         df = pd.DataFrame(prediction_results)
-        df.to_csv('result.csv')
+        if save_result:
+            df.to_csv('result.csv')
 
         return all_answers
 
-        # nlp.close()
+    # nlp.close()
 
     def get_values_from_matched_predicate(self, wd_item, rest_text):
         global predicate_matched
@@ -966,16 +983,17 @@ def save_results(prediction_result, ans_cand, answer_match_way):
 
 
 if __name__ == '__main__':
-
-    from pprint import pprint
     import json
-    import pandas as pd
-
     with open('FGC_release_all(cn).json', encoding='utf-8') as f:
         data = json.load(f)
 
-    df = pd.DataFrame(data)
+    wiki_qa = WikiQA(server='http://140.109.19.191:9000')
 
-    wiki_qa = WikiQA()
-    all_answers = wiki_qa.predict(data)
-    pprint(all_answers)
+    # all_answers = []
+    # for item in data:
+    #     all_answers.append(wiki_qa.predict(item, save_result=False, fgc_kb=True))
+    # print(all_answers)
+
+    # use data[0] to just answer the first two passages for the pilot run
+    answers = wiki_qa.predict(data[0], save_result=True, fgc_kb=True)
+    print(answers)
