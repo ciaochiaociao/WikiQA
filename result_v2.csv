@@ -1,0 +1,29 @@
+,QID,QTEXT,AMODE,ATYPE,ANS,prediction_result,wd_item,wd_item_name,predicate,predicted_ans,predicate_matched,answer_match_way,ent_link_query
+0,D001Q01,苏东坡在中国历史上，是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['北宋'],exact_match,Q36020,蘇軾,['國籍'],北宋,朝代,,苏东坡
+1,D001Q03,苏东坡的爸爸叫什么名字?,Single-Span-Extraction,Person,['苏洵'],exact_match,Q36020,蘇軾,['爸爸'],苏洵,byalias,,苏东坡
+2,D013Q01,高雄市位于台湾的东南西北部的哪一个位置?,Single-Span-Extraction,Location,"['南部', '南']",wrong,Q57251,臺灣省,['位置'],台湾,位置,,台湾
+3,D013Q01,高雄市位于台湾的东南西北部的哪一个位置?,Single-Span-Extraction,Location,"['南部', '南']",wrong,Q57251,臺灣省,['位置'],澎湖县,位置,,台湾
+4,D064Q07,郭雪湖的妻子是谁？,Single-Span-Extraction,Person,['林阿琴'],exact_match,Q7207027,郭雪湖,['妻子'],林阿琴,byalias,,郭雪湖
+5,D071Q01,张大千的出生地在中国哪里?,Single-Span-Extraction,Location,"['四川内江', '四川']",partial_match (substr),Q163298,張大千,['出生地'],内江,(出生|诞生).*((地区|地方|地点|省份|省|城市)|(地|省)),,张大千
+6,D071Q13,张大千在哪里去世?,Single-Span-Extraction,Location,['台北'],partial_match (superstr),Q163298,張大千,['死亡地'],台北市,((哪(一个|个)?(地区|地方|地点|省份|省|城市)|(哪|哪一)(地|省))|(甚么|什么)|(地区|地方|地点|省份|省|城市)|哪(里)).*((死亡|死掉|过世|逝世|去世|离世|离开人间)|死),,张大千
+7,D071Q13,张大千在哪里去世?,Single-Span-Extraction,Location,['台北'],exact_match,Q163298,張大千,['死亡地'],台北,((哪(一个|个)?(地区|地方|地点|省份|省|城市)|(哪|哪一)(地|省))|(甚么|什么)|(地区|地方|地点|省份|省|城市)|哪(里)).*((死亡|死掉|过世|逝世|去世|离世|离开人间)|死),,张大千
+8,D072Q03,莎士比亚的生日是哪一天?,Single-Span-Extraction,Date-Duration,['1564年4月23日'],wrong,Q692,威廉·莎士比亞,['出生日期'],1564年04月,生日,,莎士比亚
+9,D072Q05,莎士比亚的妻子叫什么名字?,Single-Span-Extraction,Person,['安·哈瑟维'],wrong,Q692,威廉·莎士比亞,['名字'],威廉,(.+)(甚么|什么)名字,,莎士比亚
+10,D072Q05,莎士比亚的妻子叫什么名字?,Single-Span-Extraction,Person,['安·哈瑟维'],wrong,Q692,威廉·莎士比亞,['名字'],William,(.+)(甚么|什么)名字,,莎士比亚
+11,D246Q04,哈里发塔高度有多少公尺?,Single-Span-Extraction,Num-Measure,['828公尺'],exact_match,Q12495,哈里發塔,['高度'],828公尺,高度,,哈里发塔
+12,D246Q04,哈里发塔高度有多少公尺?,Single-Span-Extraction,Num-Measure,['828公尺'],wrong,Q12495,哈里發塔,['高度'],828米,高度,,哈里发塔
+13,D246Q08,若哈里发塔每个楼层都一样高，一个楼层的高度是多少公尺？(四舍五入至小数第一位),Arithmetic-Operations,Num-Measure,['4.9公尺'],wrong,Q12495,哈里發塔,['高度'],828公尺,高度,,哈里发塔
+14,D246Q08,若哈里发塔每个楼层都一样高，一个楼层的高度是多少公尺？(四舍五入至小数第一位),Arithmetic-Operations,Num-Measure,['4.9公尺'],wrong,Q12495,哈里發塔,['高度'],828米,高度,,哈里发塔
+15,D246Q09,从开始动工到正式完工，哈里发塔总共用了多少年的时间才盖好？,Single-Span-Extraction,Date-Duration,['5年'],wrong,Q12495,哈里發塔,['成立或建立時間'],2010年01月,(开工|建立|成立|签署|生效|开始|始于).*(时后|时候|时间),,哈里发塔
+16,D247Q07,莫斯科电视塔与美国KVLY电视塔，高度相差多少公尺？,Arithmetic-Operations,Num-Measure,['88.8公尺'],wrong,Q181324,奧斯坦金諾電視塔,['高度'],540公尺,高度,,莫斯科电视塔
+17,D247Q07,莫斯科电视塔与美国KVLY电视塔，高度相差多少公尺？,Arithmetic-Operations,Num-Measure,['88.8公尺'],wrong,Q181324,奧斯坦金諾電視塔,['高度'],540米,高度,,莫斯科电视塔
+18,D247Q08,从开始动工到正式完工，哈里发塔总共用了多少年的时间才盖好？(四舍五入至整数),Date-Duration,Date-Duration,['6年'],wrong,Q12495,哈里發塔,['成立或建立時間'],2010年01月,(开工|建立|成立|签署|生效|开始|始于).*(时后|时候|时间),,哈里发塔
+19,D247Q09,哈里发塔总高度是几英尺？,Single-Span-Extraction,Num-Measure,"['828公尺', '828.2公尺']",exact_match,Q12495,哈里發塔,['高度'],828公尺,高度,,哈里发塔
+20,D247Q09,哈里发塔总高度是几英尺？,Single-Span-Extraction,Num-Measure,"['828公尺', '828.2公尺']",wrong,Q12495,哈里發塔,['高度'],828米,高度,,哈里发塔
+21,D248Q09,加拿大国家电视塔与美国KVLY-TV天线塔，高度相差多少公尺？,Arithmetic-Operations,Num-Measure,['75.5公尺'],wrong,Q134883,加拿大國家電視塔,['高度'],447公尺,高度,,加拿大国家电视塔
+22,D275Q01,曹操出生于哪个朝代？,Single-Span-Extraction,Date-Duration,['东汉'],exact_match,Q204077,曹操,['國籍'],东汉,朝代,,曹操
+23,D293Q01,丘逢甲出生于哪个朝代？,Single-Span-Extraction,Date-Duration,['清朝'],exact_match,Q718166,丘逢甲,['國籍'],清朝,朝代,,丘逢甲
+24,D293Q08,丘逢甲出生于台湾哪里？,Single-Span-Extraction,Location,['苗栗'],wrong,Q718166,丘逢甲,['出生地'],中国台湾,((出生|诞生)|生).*((哪(一个|个)?(地区|地方|地点|省份|省|城市)|(哪|哪一)(地|省))|(甚么|什么)|(地区|地方|地点|省份|省|城市)|哪(里)),,丘逢甲
+25,D293Q08,丘逢甲出生于台湾哪里？,Single-Span-Extraction,Location,['苗栗'],wrong,Q718166,丘逢甲,['出生地'],台湾,((出生|诞生)|生).*((哪(一个|个)?(地区|地方|地点|省份|省|城市)|(哪|哪一)(地|省))|(甚么|什么)|(地区|地方|地点|省份|省|城市)|哪(里)),,丘逢甲
+26,D305Q01,苏东坡出生于哪个朝代？,Single-Span-Extraction,Date-Duration,['北宋'],exact_match,Q36020,蘇軾,['國籍'],北宋,朝代,,苏东坡
+27,D305Q08,怀素是出生于哪个朝代的人？,Single-Span-Extraction,Date-Duration,"['唐朝', '唐']",exact_match,Q3235751,怀素,['國籍'],唐朝,朝代,,怀素

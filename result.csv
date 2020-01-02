@@ -1,0 +1,39 @@
+,QID,QTEXT,AMODE,ATYPE,ANS,prediction_result,wd_item,wd_item_name,predicate,predicted_ans,answer_match_way,ent_link_query
+0,D001Q01,苏东坡在中国历史上，是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['北宋'],exact_match,Q36020,蘇軾,國籍,北宋,,苏东坡
+1,D001Q03,苏东坡的爸爸叫什么名字?,Single-Span-Extraction,Person,['苏洵'],exact_match,Q36020,蘇軾,父親,苏洵,,苏东坡
+2,D001Q06,韩愈在中国历史上，是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['唐代'],exact_match,Q318998,韓愈,國籍,唐代,,韩愈
+3,D001Q06,韩愈在中国历史上，是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['唐代'],partial_match (substr),Q318998,韓愈,國籍,唐,,韩愈
+4,D001Q09,辛弃疾是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['南宋'],wrong,Q1155987,辛弃疾,國籍,宋代,,辛弃疾
+5,D001Q09,辛弃疾是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['南宋'],partial_match (substr),Q1155987,辛弃疾,國籍,宋,,辛弃疾
+6,D013Q08,高雄以前叫什么名字?,Single-Span-Extraction,Location,['打狗'],wrong,Q16900832,高雄,名字,高雄市,,高雄
+7,D013Q08,高雄以前叫什么名字?,Single-Span-Extraction,Location,['打狗'],wrong,Q22343543,高雄,名字,高雄市,,高雄
+8,D013Q08,高雄以前叫什么名字?,Single-Span-Extraction,Location,['打狗'],wrong,Q45579367,高雄,名字,高雄市,,高雄
+9,D013Q08,高雄以前叫什么名字?,Single-Span-Extraction,Location,['打狗'],wrong,Q5336671,高雄,名字,高雄市,,高雄
+10,D071Q01,张大千的出生地在中国哪里?,Single-Span-Extraction,Location,"['四川内江', '四川']",partial_match (substr),Q163298,張大千,出生地,内江,,张大千
+11,D071Q12,张大千哪一年去世?,Single-Span-Extraction,Date-Duration,['1983年'],partial_match (superstr),Q163298,張大千,死亡日期,1983年4月2日,,张大千
+12,D071Q12,张大千哪一年去世?,Single-Span-Extraction,Date-Duration,['1983年'],partial_match (superstr),Q163298,張大千,死亡日期,1983年4月2日,,张大千
+13,D071Q12,张大千哪一年去世?,Single-Span-Extraction,Date-Duration,['1983年'],partial_match (superstr),Q163298,張大千,死亡日期,1983年4月2日,,张大千
+14,D071Q12,张大千哪一年去世?,Single-Span-Extraction,Date-Duration,['1983年'],partial_match (superstr),Q163298,張大千,死亡日期,1983年4月2日,,张大千
+15,D071Q13,张大千在哪里去世?,Single-Span-Extraction,Location,['台北'],partial_match (superstr),Q163298,張大千,死亡地,台北市,,张大千
+16,D071Q13,张大千在哪里去世?,Single-Span-Extraction,Location,['台北'],partial_match (superstr),Q163298,張大千,死亡地,台北市,,张大千
+17,D072Q03,莎士比亚的生日是哪一天?,Single-Span-Extraction,Date-Duration,['1564年4月23日'],exact_match,Q692,威廉·莎士比亞,出生日期,1564年4月23日,,莎士比亚
+18,D072Q03,莎士比亚的生日是哪一天?,Single-Span-Extraction,Date-Duration,['1564年4月23日'],exact_match,Q692,威廉·莎士比亞,出生日期,1564年4月23日,,莎士比亚
+19,D077Q10,马可.波罗是哪一国人？(文本中),Single-Span-Extraction,Organization,['威尼斯共和国'],wrong,Q9012009,马可,國籍,中国,,马可
+20,D097Q05,诺贝尔于哪一年过世?,Single-Span-Extraction,Date-Duration,['1896年'],partial_match (superstr),Q23810,阿尔弗雷德·诺贝尔,死亡日期,1896年12月10日,,诺贝尔
+21,D097Q05,诺贝尔于哪一年过世?,Single-Span-Extraction,Date-Duration,['1896年'],partial_match (superstr),Q23810,阿尔弗雷德·诺贝尔,死亡日期,1896年12月10日,,诺贝尔
+22,D097Q05,诺贝尔于哪一年过世?,Single-Span-Extraction,Date-Duration,['1896年'],partial_match (superstr),Q23810,阿尔弗雷德·诺贝尔,死亡日期,1896年12月10日,,诺贝尔
+23,D097Q05,诺贝尔于哪一年过世?,Single-Span-Extraction,Date-Duration,['1896年'],partial_match (superstr),Q23810,阿尔弗雷德·诺贝尔,死亡日期,1896年12月10日,,诺贝尔
+24,D247Q09,哈里发塔总高度是几英尺？,Single-Span-Extraction,Num-Measure,"['828公尺', '828.2公尺']",wrong,Q12495,哈里發塔,高度,628.8,,哈里发塔
+25,D247Q09,哈里发塔总高度是几英尺？,Single-Span-Extraction,Num-Measure,"['828公尺', '828.2公尺']",partial_match (substr),Q12495,哈里發塔,高度,828,,哈里发塔
+26,D254Q01,杨震出生于哪个朝代？,Single-Span-Extraction,Date-Duration,['东汉'],wrong,Q28408783,杨震,國籍,中,,杨震
+27,D275Q01,曹操出生于哪个朝代？,Single-Span-Extraction,Date-Duration,['东汉'],partial_match (superstr),Q204077,曹操,國籍,东汉末年,,曹操
+28,D285Q01,玄奘是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['唐代'],exact_match,Q42063,玄奘,國籍,唐代,,玄奘
+29,D285Q01,玄奘是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['唐代'],partial_match (substr),Q42063,玄奘,國籍,唐,,玄奘
+30,D285Q01,玄奘是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['唐代'],exact_match,Q45542985,陳某,國籍,唐代,,玄奘
+31,D285Q01,玄奘是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['唐代'],partial_match (substr),Q45542985,陳某,國籍,唐,,玄奘
+32,D293Q01,丘逢甲出生于哪个朝代？,Single-Span-Extraction,Date-Duration,['清朝'],partial_match (superstr),Q718166,丘逢甲,國籍,清朝末年,,丘逢甲
+33,D293Q08,丘逢甲出生于台湾哪里？,Single-Span-Extraction,Location,['苗栗'],wrong,Q718166,丘逢甲,出生地,台湾,,丘逢甲
+34,D293Q08,丘逢甲出生于台湾哪里？,Single-Span-Extraction,Location,['苗栗'],wrong,Q718166,丘逢甲,出生地,台湾,,丘逢甲
+35,D305Q01,苏东坡出生于哪个朝代？,Single-Span-Extraction,Date-Duration,['北宋'],partial_match (superstr),Q36020,蘇軾,國籍,北宋时代,,苏东坡
+36,D305Q06,王羲之是哪个朝代的人？,Single-Span-Extraction,Date-Duration,['东晋'],exact_match,Q378564,王羲之,國籍,东晋,,王羲之
+37,D305Q08,怀素是出生于哪个朝代的人？,Single-Span-Extraction,Date-Duration,"['唐朝', '唐']",exact_match,Q3235751,怀素,國籍,唐朝,,怀素
