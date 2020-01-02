@@ -1,6 +1,6 @@
 ,QID,QTEXT,AMODE,ATYPE,ANS,prediction_result,wd_item,wd_item_name,predicate,predicted_ans,answer_match_way,ent_link_query
 0,D001Q01,苏东坡在中国历史上，是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['北宋'],Unknown in evaluation mode (if_evaluate=True),Q36020,蘇軾,國籍,北宋,,苏东坡
-1,D001Q06,韩愈在中国历史上，是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['唐代'],Unknown in evaluation mode (if_evaluate=True),Q318998,韓愈,國籍,唐代,,韩愈
-2,D001Q06,韩愈在中国历史上，是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['唐代'],Unknown in evaluation mode (if_evaluate=True),Q318998,韓愈,國籍,唐,,韩愈
-3,D001Q09,辛弃疾是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['南宋'],Unknown in evaluation mode (if_evaluate=True),Q1155987,辛弃疾,國籍,宋代,,辛弃疾
-4,D001Q09,辛弃疾是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['南宋'],Unknown in evaluation mode (if_evaluate=True),Q1155987,辛弃疾,國籍,宋,,辛弃疾
+1,D001Q06,韩愈在中国历史上，是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['唐代'],Unknown in evaluation mode (if_evaluate=True),Q318998,韓愈,國籍,唐,,韩愈
+2,D001Q06,韩愈在中国历史上，是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['唐代'],Unknown in evaluation mode (if_evaluate=True),Q318998,韓愈,國籍,唐代,,韩愈
+3,D001Q09,辛弃疾是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['南宋'],Unknown in evaluation mode (if_evaluate=True),Q1155987,辛弃疾,國籍,宋,,辛弃疾
+4,D001Q09,辛弃疾是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['南宋'],Unknown in evaluation mode (if_evaluate=True),Q1155987,辛弃疾,國籍,宋代,,辛弃疾
