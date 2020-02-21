@@ -74,12 +74,3 @@ def _get_text_from_token_entity_comp(ent_link_cand: Union[List[Union[NERMention,
         return ent_link_cand.entityMentionText
     if isinstance(ent_link_cand, str):
         return ent_link_cand
-    texts = []
-    for one in ent_link_cand:
-        if isinstance(one, NERMention):
-            texts.append(one.entityMentionText)
-        elif isinstance(one, Token):
-            texts.append(one.originalText)
-        else:
-            raise ValueError("Must be either entity mention or token in the expanded entity linking set")
-    return ''.join(texts)
