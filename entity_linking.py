@@ -23,7 +23,7 @@ def entity_linking(ent_link_cands):
         wd_items = get_dicts_from_keyword(ent_link_query)
         # clean wikidata item and simplify wikidata item
         wd_items = [readable(filter_claims_in_dict(d)) for d in wd_items]
-        all_wd_items.append(wd_items)
+        all_wd_items.extend(wd_items)
 
     return all_wd_items
 
