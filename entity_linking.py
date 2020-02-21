@@ -14,6 +14,7 @@ def entity_linking(ent_link_cands):
     answers_from_ent_link_queries = []  # answers_from_one_question
     ent_link_queries = build_queries_to_EL(ent_link_cands)
 
+    all_wd_items = []
     for ent_link_query in ent_link_queries:
         # -------------------------------------------
         # rule 1: Entity Linking - get item from Wikidata
@@ -21,8 +22,9 @@ def entity_linking(ent_link_cands):
         wd_items = get_dicts_from_keyword(ent_link_query)
         # clean wikidata item and simplify wikidata item
         wd_items = [readable(filter_claims_in_dict(d)) for d in wd_items]
+        all_wd_items.append(wd_items)
 
-    return wd_items
+    return all_wd_items
 
 
 def build_candidates_to_EL(name, passage_ie_data, question_ie_data, span):
