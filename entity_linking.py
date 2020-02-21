@@ -30,7 +30,7 @@ def entity_linking(ent_link_cands):
 def build_candidates_to_EL(name, passage_ie_data, question_ie_data, span):
     ent_link_cands = []
     # 1. NER mentions containing/occupying the span ??
-    mentions = list(get_ent_from_stanford_by_char_span(span, question_ie_data.mentions, passage_ie_data))
+    mentions = list(get_ent_from_stanford_by_char_span(span, question_ie_data.mentions, question_ie_data))
     if mentions:
         ent_link_cands.extend(mentions)
     # 2. parsed name from regex
