@@ -6,7 +6,7 @@ from typing import Union, List
 
 from stanfordnlp.protobuf import NERMention, Token
 
-from qa_utils import get_ent_from_tok_b_e
+from stanfordnlp_utils import get_ent_from_stanford_by_char_span
 from wikidata4fgc_v2 import get_dicts_from_keyword, filter_claims_in_dict, readable
 
 
@@ -25,10 +25,10 @@ def entity_linking(ent_link_cands):
     return wd_items
 
 
-def build_candidates_to_EL(name, passage_data, question_data, span):
+def build_candidates_to_EL(name, passage_ie_data, question_ie_data, span):
     ent_link_cands = []
     # 1. NER mentions containing/occupying the span ??
-    mentions = list(get_ent_from_tok_b_e(span, question_data.mentions, passage_data))
+    mentions = list(get_ent_from_stanford_by_char_span(span, question_ie_data.mentions, passage_ie_data))
     if mentions:
         ent_link_cands.extend(mentions)
     # 2. parsed name from regex
@@ -59,7 +59,7 @@ def build_queries_to_EL(ent_link_cands):
     return ent_link_queries
 
 
-def _get_text_from_token_entity_comp(ent_link_cand: Union[List[Union[NERMention, Token]], str]) -> str:
+def _get_text_from_token_entity_comp(ent_link_cand: Union[List[Union[NERMention, Token]], str, NERMention]) -> str:
     """
     get text of `NERMention` and `Token`
     :type ent_link_cand: Union[List[Union[NERMention, Token]], str]

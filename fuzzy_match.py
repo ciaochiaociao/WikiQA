@@ -4,9 +4,18 @@
 #  Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus.
 #  Vestibulum commodo. Ut rhoncus gravida arcu.
 
-from opencc import OpenCC
+import regex
 
-cc = OpenCC('t2s')
-DEFAULT_CORENLP_IP = 'http://140.109.19.191:9000'
-FGC_KB_PATH = 'fgc_knowledgebase.json'
-UNKNOWN_MESSAGE = 'Unknown in evaluation mode (if_evaluate=True)'
+
+def build_fuzzy_match_pattern(matcher):
+    max_errors = 1
+    if len(matcher) > 3:
+        pattern = '(' + matcher + '){e<=' + str(max_errors) + '}'  # allowed max_errors
+    else:
+        pattern = matcher
+    return pattern
+
+
+def fuzzy_match(text, pattern):
+    matches = list(regex.finditer(pattern, text))
+    return matches
