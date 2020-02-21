@@ -1,7 +1,8 @@
-#  Copyright (c) 2020. The Natural Language Understanding Lab, Institute of Information Science, Academia Sinica - All Rights Reserved
-#  Unauthorized copying of this file, via any medium is strictly prohibited
-#  Proprietary and confidential
-#  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
+#  Copyright (c) 2020. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+#  Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan.
+#  Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna.
+#  Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus.
+#  Vestibulum commodo. Ut rhoncus gravida arcu.
 from typing import Union, List
 
 from stanfordnlp.protobuf import NERMention, Token
@@ -34,7 +35,7 @@ def build_candidates_to_EL(name, passage_ie_data, question_ie_data, span):
     if mentions:
         ent_link_cands.extend(mentions)
     # 2. parsed name from regex
-    ent_link_cands = [name]
+    ent_link_cands.extend([name])
     # 3. add more candidates by post-processing
     # '.' or '·' in name, e.g., 馬可.波羅
     if '.' in name:
