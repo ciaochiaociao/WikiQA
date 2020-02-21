@@ -56,7 +56,7 @@ human = '(人|人物)'
 who = f'((({what_which}|{what_sim}).{0, 5}{human})|谁)'
 found = f'(创立|创办|开始|创建|发起|创业|建立)'
 
-name = '(?P<name>[^的]{2,10})'
+name = '(?P<name>[^的]{2,10}?)'
 is_ = '(叫|是)'
 height = '((总)高度|身高)'
 have = '(有|拥有)'
