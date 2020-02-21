@@ -19,7 +19,7 @@ with open('FGC_release_all(cn).json', encoding='utf-8') as f:
 df = pd.DataFrame(data)
 
 wiki_qa = WikiQA()
-all_answers = wiki_qa.predict(data)  # use data[0:2] to just answer the first two passages for the pilot run
+all_answers = wiki_qa.predict_on_qs_of_one_doc(data)  # use data[0:2] to just answer the first two passages for the pilot run
 pprint(all_answers)
 ```
 ```
