@@ -7,18 +7,8 @@ from typing import Union, List
 
 from stanfordnlp.protobuf import NERMention, Token
 
-from stanfordnlp_utils import get_ent_from_stanford_by_char_span
-from wikidata4fgc_v2 import get_dicts_from_keyword, filter_claims_in_dict, readable
-
-
-def entity_linking(ent_link_cands):
-    answers_from_ent_link_queries = []  # answers_from_one_question
-    ent_link_queries = build_queries_to_EL(ent_link_cands)
-
-    all_wd_items = []
-    for ent_link_query in ent_link_queries:
-        # -------------------------------------------
-        # rule 1: Entity Linking - get item from Wikidata
+from stanfordnlp_utils import snp_get_ents_by_char_span_in_doc
+from wikidata4fgc_v2 import get_dicts_from_keyword, clean_and_simplify_wd_items
 
 
 def build_candidates_to_EL(name, question_ie_data, span, use_ner=True, split_dot=True):
@@ -70,9 +60,6 @@ def build_queries(texts):
         if ent_link_query in shown_queries:  # skip duplicate
             continue
         shown_queries.add(ent_link_query)
-        # print(f'ent_link query {ix}: {ent_link_query}')
-        # print()
-        # debug_info.update({'ent_link_query': ent_link_query})
 
         # ============================================================ ent_link_cand
         ent_link_queries.append(ent_link_query)
