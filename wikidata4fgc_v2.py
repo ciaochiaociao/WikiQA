@@ -236,6 +236,12 @@ def readable(d: Dict):
     return d
 
 
+def clean_and_simplify_wd_items(all_wd_items):
+    all_wd_items = map(filter_claims_in_dict, all_wd_items)
+    all_wd_items = map(readable, all_wd_items)
+    return list(all_wd_items)
+
+
 if __name__ == '__main__':
     from pprint import pprint
 #     print("run test: get_dicts_from_keyword('東坡居士')")
