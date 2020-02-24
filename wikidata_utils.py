@@ -1,11 +1,15 @@
-#  Copyright (c) 2020. The Natural Language Understanding Lab, Institute of Information Science, Academia Sinica - All Rights Reserved
-#  Unauthorized copying of this file, via any medium is strictly prohibited
-#  Proprietary and confidential
-#  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
-from wikidata4fgc_v2 import get_all_aliases_from_dict
+#   Copyright (c) 2020. The NLU Lab, Institute of Information Science, Academia Sinica - All Rights Reserved
+#   Unauthorized copying of this file, via any medium is strictly prohibited
+#   Proprietary and confidential
+#   Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
+import re
+from typing import List
+
+from config import cc
+from wikidata4fgc_v2 import get_all_aliases_from_dict, get_all_aliases_from_id
 
 
-def traverse_wikidata_by_attr_name(attr, wd_item):
+def traverse_by_attr_name(wd_item, attr):
     # match predicates
     # new version:
     def _get_value_from_attr_and_wd_item(wd_item, attr):
