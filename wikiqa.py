@@ -149,23 +149,46 @@ class WikiQA:
         parsed_result = parse_question_by_regex(qtext)
         if parsed_result:
             name, attr, span, matched_pattern = parsed_result
+            print('(ParseQ)', name, '|', attr)
         else:  # skip this question if not matched by our rules/regex
             return
         # ===== STEP B. entity linking =====
-        ent_link_cands = build_candidates_to_EL(name, passage_ie_data, question_ie_data, span)
+        ent_link_cands = build_candidates_to_EL(name, question_ie_data, span)
         wd_items = entity_linking(ent_link_cands)
+        print('(EL)', [(get_fallback_zh_label_from_dict(i), i['id']) for i in wd_items])
         # ===== STEP C. traverse Wikidata =====
-        # loop thourgh all results from wikidata API, get all datavalues from all relations of all wd_items from
-        # one ent_link_query
-        wd_item_rel_datavalues_matched_tuples = []
+        datavalues = []
         for wd_item in wd_items:
-            rel_datavalues_matched_tuples = traverse_wikidata_by_attr_name(attr, wd_item)
-            if rel_datavalues_matched_tuples:
-                wd_item_rel_datavalues_matched_tuples.append((wd_item, rel_datavalues_matched_tuples))
-        # ===== STEP D. Answer Validation =====
-        final_answers = datavalues2answers(wd_item_rel_datavalues_matched_tuples, qtext, q_dict, dtext,
-                                           passage_ie_data)
-        return final_answers
+            values = traverse_by_attr_name(wd_item, attr)
+            if values:
+                datavalues.extend(values)
+        try:  # item
+            print('(Traverse)', [d['value'] + ' ' + d['all_aliases'][0][0] for d in datavalues])
+        except KeyError:  # date/time
+            print('(Traverse)', [d['value'] for d in datavalues])
+        except TypeError:  # string
+            print('(Traverse)', datavalues)
+
+        # ===== STEP D. Post Processing datavalues =====
+        processed_datavalues = []
+        for value in datavalues:
+            processed_list: List[str] = postprocess_datavalue(value)
+            processed_datavalues.extend(processed_list)
+        print('(Post-Proc)', processed_datavalues)
+
+        # ===== STEP E. Coordinating with Passage =====
+        final_answers = []  # answers_from_one_ent_link_query
+        for dvalue_comp in processed_datavalues:
+            answers_from_one_datavalue = gen_anses_from_postprocessed_value(dvalue_comp, qtext, q_dict['ATYPE'], dtext,
+                                                                            passage_ie_data)
+            final_answers.extend(answers_from_one_datavalue)
+        final_answers = list(remove_duplicates(final_answers, qtext))
+        print('(VALID)', final_answers)
+
+        # ===== STEP F. Final Decision =====
+        final_answer = longest_answer(final_answers)
+        print('(WikiQA)', final_answer)
+        return final_answer
 
 
 def evaluate(dtext, predicted_ans, answers) -> str:
