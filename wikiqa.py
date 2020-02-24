@@ -83,10 +83,10 @@ class WikiQA:
                     continue
 
             # filter out unwanted mode
-            if q_dict['AMODE'] == 'Yes-No':
+            if q_dict['AMODE'] in ['Yes-No', 'Comparing-Members', 'Kinship']:
                 continue
-            if q_dict['ATYPE'] in ['Object']:
-                continue
+            # if q_dict['ATYPE'] in ['Object']:
+            #     continue
 
             # for evaluation
             if if_evaluate:
