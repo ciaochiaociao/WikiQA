@@ -1,10 +1,7 @@
-#  Copyright (c) 2020. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-#  Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan.
-#  Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna.
-#  Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus.
-#  Vestibulum commodo. Ut rhoncus gravida arcu.
-import re
-from typing import Union, List, Dict
+#   Copyright (c) 2020. The NLU Lab, Institute of Information Science, Academia Sinica - All Rights Reserved
+#   Unauthorized copying of this file, via any medium is strictly prohibited
+#   Proprietary and confidential
+#   Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
 
 from fuzzy_match import build_fuzzy_match_pattern, fuzzy_match
 from config import cc
