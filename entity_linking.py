@@ -54,16 +54,15 @@ def entity_linking(ent_link_cands):
 
 def build_queries(texts):
     shown_queries = set()
-    ent_link_queries = []
-    for ix, ent_link_cand in enumerate(ent_link_cands):
-        ent_link_query = _get_text_from_token_entity_comp(ent_link_cand)
+    queries = []
+    for ix, text in enumerate(texts):
+        ent_link_query = _get_text_from_token_entity_comp(text)
         if ent_link_query in shown_queries:  # skip duplicate
             continue
         shown_queries.add(ent_link_query)
 
-        # ============================================================ ent_link_cand
-        ent_link_queries.append(ent_link_query)
-    return ent_link_queries
+        queries.append(ent_link_query)
+    return queries
 
 
 def _get_text_from_token_entity_comp(ent_link_cand: Union[List[Union[NERMention, Token]], str, NERMention]) -> str:
