@@ -115,13 +115,13 @@ class WikiQA:
                 print('{} (tokenized, hans):'.format(fgc_data['DID']))
                 for sent in passage_ie_data.sentence:
                     print(f'(sent{sent.sentenceIndex})', end=' ')
-                    for tok in sent.token:
-                        print(tok.originalText, end=' ')
+                    snp_pprint(sent)
                 print('\n')
-            print('{} (tokenized, hans):'.format(q_dict['QID']),
-                *[token.originalText for sent in question_ie_data.sentence for token in sent.token],
-                '(Gold)', answers,
-                sep=' ')
+            print('{} {} {}:'.format(q_dict['QID'], fg.brightgray(q_dict['AMODE']), fg.brightgray(q_dict['ATYPE'])), end=' ')
+            if len(question_ie_data.sentence) > 1:
+                print('[WARN] question split into two sentences during IE!')
+            snp_pprint(question_ie_data.sentence[0], end='')
+            print('(Gold)', answers)
 
             final_answers = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data)
 
