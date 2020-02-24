@@ -4,16 +4,21 @@
 #  Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus.
 #  Vestibulum commodo. Ut rhoncus gravida arcu.
 from typing import List, Dict
+
+from ansi.colour import fg
 from google.protobuf.pyext._message import SetAllowOversizeProtos
 from os.path import join, abspath, dirname
+
 from stanfordnlp.server import CoreNLPClient
 
-from wikidata_utils import traverse_wikidata_by_attr_name
+from stanfordnlp_utils import snp_pprint
+from wikidata4fgc_v2 import get_fallback_zh_label_from_dict
+from wikidata_utils import traverse_by_attr_name, postprocess_datavalue
 from config import DEFAULT_CORENLP_IP, FGC_KB_PATH, UNKNOWN_MESSAGE
 
 from entity_linking import build_candidates_to_EL, entity_linking
 from predicate_inference_rules import parse_question_by_regex
-from value2ans import datavalues2answers
+from value2ans import gen_anses_from_postprocessed_value, remove_duplicates, longest_answer
 
 # fix bug: google.protobuf.message.DecodeError: Error parsing message
 # ref: https://github.com/stanfordnlp/stanfordnlp/issues/154
