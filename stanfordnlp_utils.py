@@ -4,10 +4,11 @@
 #   Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
 
 import re
-from typing import List
+from typing import List, Union
 
 from ansi.colour import fg, bg
 from stanfordnlp.protobuf import NERMention, Token, Document, Sentence
+from stanfordnlp.server import CoreNLPClient
 
 from utils import overlapped_range, apply_dict, print_multicolor_strs
 
