@@ -239,7 +239,7 @@ def evaluate(dtext, predicted_ans, answers) -> str:
 if __name__ == '__main__':
     import json
     with open('FGC_release_all(cn).json', encoding='utf-8') as f:
-        data = json.load(f)
+        docs = json.load(f)
 
     wiki_qa = WikiQA(server='http://140.109.19.191:9000')
 
@@ -249,7 +249,8 @@ if __name__ == '__main__':
     # print(all_answers)
 
     # use data[0] to just answer the first two passages for the pilot run
-    answers = wiki_qa.predict_on_qs_of_one_doc(data[0], save_result=True, use_fgc_kb=False)
-    # for datum in data:
-    #     answers = wiki_qa.predict_on_qs_of_one_doc(datum, save_result=True, use_fgc_kb=False)
+    # print(wiki_qa.predict_on_qs_of_one_doc(get_doc_with_one_que('D002Q02', docs), save_result=True, use_fgc_kb=False))
+    # docs = remove_docs_before_did('D274', docs)
+    for doc in docs:
+        answers = wiki_qa.predict_on_qs_of_one_doc(doc, save_result=True, use_fgc_kb=False)
         # break
