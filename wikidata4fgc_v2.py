@@ -244,11 +244,11 @@ def clean_and_simplify_wd_items(all_wd_items):
 
 if __name__ == '__main__':
     from pprint import pprint
-#     print("run test: get_dicts_from_keyword('東坡居士')")
+    print("run test: get_dicts_from_keyword('東坡居士')")
     for d in get_dicts_from_keyword('東坡居士'):
         pprint(get_all_aliases_from_dict(d))
-#     pprint(get_multiling_label_from_id('Q36020'))
-
+    pprint(get_multiling_label_from_id('Q36020'))
+    print("run test: get_dicts_from_id('Q36020')")
     for d in get_dicts_from_id('Q36020'):
         d = filter_claims_in_dict(d)
         pprint(readable(d))
