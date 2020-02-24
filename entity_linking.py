@@ -20,28 +20,28 @@ def entity_linking(ent_link_cands):
         # -------------------------------------------
         # rule 1: Entity Linking - get item from Wikidata
 
-        wd_items = get_dicts_from_keyword(ent_link_query)
-        # clean wikidata item and simplify wikidata item
-        wd_items = [readable(filter_claims_in_dict(d)) for d in wd_items]
-        all_wd_items.extend(wd_items)
 
-    return all_wd_items
+def build_candidates_to_EL(name, question_ie_data, span, use_ner=True, split_dot=True):
 
-
-def build_candidates_to_EL(name, passage_ie_data, question_ie_data, span):
     ent_link_cands = []
-    # 1. NER mentions containing/occupying the span ??
-    mentions = list(get_ent_from_stanford_by_char_span(span, question_ie_data.mentions, question_ie_data))
-    if mentions:
-        ent_link_cands.extend(mentions)
-    # 2. parsed name from regex
-    ent_link_cands.extend([name])
-    # 3. add more candidates by post-processing
+
+    # 1. parsed name from regex (default)
+    ent_link_cands.append(name)
+
+    # 2. add more candidates by post-processing (remove 'dot' in subject)
     # '.' or '·' in name, e.g., 馬可.波羅
-    if '.' in name:
-        ent_link_cands.append(''.join(name.split('.')))
-    if '·' in name:
-        ent_link_cands.append(''.join(name.split('·')))
+    if split_dot:
+        if '.' in name:
+            ent_link_cands.append(''.join(name.split('.')))
+        if '·' in name:
+            ent_link_cands.append(''.join(name.split('·')))
+
+    # 3. NER mentions containing/occupying the span
+    if use_ner:
+        mentions = list(snp_get_ents_by_char_span_in_doc(span, question_ie_data))
+        if mentions:
+            ent_link_cands.extend(mentions)
+
     return ent_link_cands
 
 
