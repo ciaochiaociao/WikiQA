@@ -45,7 +45,24 @@ def build_candidates_to_EL(name, question_ie_data, span, use_ner=True, split_dot
     return ent_link_cands
 
 
-def build_queries_to_EL(ent_link_cands):
+def entity_linking(ent_link_cands):
+
+    # build queries
+    ent_link_queries = build_queries(ent_link_cands)
+
+    # query to Wikidata
+    all_wd_items = []
+    for ent_link_query in ent_link_queries:
+        wd_items = get_dicts_from_keyword(ent_link_query)
+        all_wd_items.extend(wd_items)
+
+    # clean wikidata item and simplify wikidata item
+    all_wd_items = clean_and_simplify_wd_items(all_wd_items)
+
+    return all_wd_items
+
+
+def build_queries(texts):
     shown_queries = set()
     ent_link_queries = []
     for ix, ent_link_cand in enumerate(ent_link_cands):
