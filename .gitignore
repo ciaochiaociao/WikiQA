@@ -1,3 +1,4 @@
 # Project exclude paths
 /.ipynb_checkpoints/
 /.vscode/
+logs/*

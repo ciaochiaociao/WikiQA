@@ -67,3 +67,6 @@ pprint(all_answers)
 
 0.1 - Original Release
 0.2 - Add fgc_knowledgebase.json, fgc_kb mode
+0.3 - Refactor WikiQA - 1 
+0.4 - Refactor WikiQA - 2
+0.5 - Refactor WikiQA - 3
