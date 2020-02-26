@@ -2,7 +2,8 @@
 #   Unauthorized copying of this file, via any medium is strictly prohibited
 #   Proprietary and confidential
 #   Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
-from typing import List, Dict
+from typing import List, Dict, TextIO
+import json
 
 from ansi.colour import fg
 from google.protobuf.pyext._message import SetAllowOversizeProtos
@@ -257,7 +258,6 @@ def evaluate(dtext, predicted_ans, answers) -> str:
 
 
 if __name__ == '__main__':
-    import json
     with open('FGC_release_all(cn).json', encoding='utf-8') as f:
         docs = json.load(f)
 
