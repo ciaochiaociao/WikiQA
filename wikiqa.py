@@ -170,12 +170,16 @@ class WikiQA:
             values = traverse_by_attr_name(wd_item, attr)
             if values:
                 datavalues.extend(values)
-        try:  # item
-            print('(Traverse)', [d['value'] + ' ' + d['all_aliases'][0][0] for d in datavalues])
-        except KeyError:  # date/time
-            print('(Traverse)', [d['value'] for d in datavalues])
-        except TypeError:  # string
-            print('(Traverse)', datavalues)
+        
+        def _pretty_datavalues(datavalues):
+            try:  # item
+                return [d['value'] + ' ' + d['all_aliases'][0][0] for d in datavalues]
+            except KeyError:  # date/time
+                return [d['value'] for d in datavalues]
+            except TypeError:  # string
+                return datavalues
+            
+        print('(Traverse)', _pretty_datavalues(datavalues))
 
         # ===== STEP D. Post Processing datavalues =====
         processed_datavalues = []
