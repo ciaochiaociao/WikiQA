@@ -11,6 +11,7 @@ from os.path import join, abspath, dirname
 
 from stanfordnlp.server import CoreNLPClient
 
+from fgc_utils import get_doc_with_one_que
 from stanfordnlp_utils import snp_pprint
 from wikidata4fgc_v2 import get_fallback_zh_label_from_dict
 from wikidata_utils import traverse_by_attr_name, postprocess_datavalue
@@ -273,7 +274,7 @@ if __name__ == '__main__':
     # print(all_answers)
 
     # use data[0] to just answer the first two passages for the pilot run
-    # print(wiki_qa.predict_on_qs_of_one_doc(get_doc_with_one_que('D002Q02', docs), save_result=True, use_fgc_kb=False))
+    print(wiki_qa.predict_on_qs_of_one_doc(get_doc_with_one_que('D302Q01', docs), use_fgc_kb=False))
     # docs = remove_docs_before_did('D274', docs)
     # for doc in docs:
     #     answers = wiki_qa.predict_on_qs_of_one_doc(doc, use_fgc_kb=False)
