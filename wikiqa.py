@@ -37,20 +37,23 @@ class WikiQA:
         with open(join(cur_path, FGC_KB_PATH), 'r', encoding='utf-8') as f:
             self.kbqa_sheet = json.load(f)
 
-    def predict_on_qs_of_one_doc(self, fgc_data, save_result=False, use_fgc_kb=True):
+    def predict_on_qs_of_one_doc(self, fgc_data, use_fgc_kb: bool = True, file4eval: TextIO = None) -> List[List[Dict]]:
         """
         :param Dict fgc_data: fgc data at the level of document, i.e., one document with multiple questions
+        :param bool use_fgc_kb: if using fgc kb to answer before the wiki-based QA module
+        :param TextIO file4eval: the file to save stage-by-stage results for evaluation
+        :return List[List[Dict]]: answers of all questions in this document (an answer is in the format of a `dict`
         """
         global nlp
         with CoreNLPClient(endpoint=self.corenlp_ip, annotators="tokenize,ssplit,lemma,pos,ner",
                             start_server=False, properties='chinese') as nlp:
-            return self._predict_on_qs_of_one_doc(fgc_data, save_result, use_fgc_kb)
+            return self._predict_on_qs_of_one_doc(fgc_data, use_fgc_kb, file4eval)
 
     def _get_from_fgc_kb(self, qtext):
         if qtext in self.kbqa_sheet:
             return self.kbqa_sheet[qtext]
 
-    def _predict_on_qs_of_one_doc(self, fgc_data: dict, if_save_result: bool, use_fgc_kb: bool) -> List[List[Dict]]:
+    def _predict_on_qs_of_one_doc(self, fgc_data: dict, use_fgc_kb: bool, file4eval) -> List[List[Dict]]:
         # global q_dict, wd_item, rel, attr, predicate_matched, question_ie_data, passage_ie_data, mentions_bracketed, \
         #     dtext, answers, if_evaluate, qtext, debug_info
 
@@ -122,7 +125,7 @@ class WikiQA:
             snp_pprint(question_ie_data.sentence[0], end='')
             print('(Gold)', answers)
 
-            final_answers = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data)
+            final_answers = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval)
 
             # ===== FINISHING STEP =====
             # transfer to FGC output api format
@@ -148,7 +151,7 @@ class WikiQA:
         #     df.to_csv('result.csv')
         return all_answers
 
-    def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data):
+    def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval):
         # ===== STEP A. parse question (parse entity name + predicate inference) =====
         parsed_result = parse_question_by_regex(qtext)
         if parsed_result:
@@ -192,6 +195,19 @@ class WikiQA:
         # ===== STEP F. Final Decision =====
         final_answer = longest_answer(final_answers)
         print('(WikiQA)', final_answer)
+        
+        
+        # output stage-by-stage results for evaluation
+        if file4eval:
+            print(q_dict['QID'],
+                  name,
+                  attr,
+                  [i['id'] for i in wd_items],
+                  _pretty_datavalues(datavalues), 
+                  processed_datavalues, 
+                  final_answers, 
+                  final_answer, sep='\t', file=file4eval, flush=True)
+
         return final_answer
 
 
@@ -255,6 +271,6 @@ if __name__ == '__main__':
     # use data[0] to just answer the first two passages for the pilot run
     # print(wiki_qa.predict_on_qs_of_one_doc(get_doc_with_one_que('D002Q02', docs), save_result=True, use_fgc_kb=False))
     # docs = remove_docs_before_did('D274', docs)
-    for doc in docs:
-        answers = wiki_qa.predict_on_qs_of_one_doc(doc, save_result=True, use_fgc_kb=False)
+    # for doc in docs:
+    #     answers = wiki_qa.predict_on_qs_of_one_doc(doc, use_fgc_kb=False)
         # break
