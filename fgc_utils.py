@@ -22,6 +22,7 @@ def get_doc_with_one_que(qid, docs):
     for doc in docs:
         for q in doc['QUESTIONS']:
             if q['QID'] == qid:
+                doc = deepcopy(doc)
                 doc['QUESTIONS'] = [q]
                 return doc
 
