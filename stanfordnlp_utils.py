@@ -17,7 +17,23 @@ def get_client(ip='http://140.109.19.191:9000', annotators="tokenize,ssplit,lemm
     return CoreNLPClient(endpoint=ip, annotators=annotators, start_server=False, properties='chinese')
 
 
-def snp_get_ents_by_char_span_in_doc(span, snp_doc: Document):
+def snp_get_ents_by_overlapping_char_span_in_doc(span, snp_doc):
+    all_tokens = [token for sent in snp_doc.sentence for token in sent.token]
+    for mention in snp_doc.mentions:
+        _span = snp_get_char_span_of_ent(all_tokens, mention)
+        assert snp_doc.text[slice(*_span)] == mention.entityMentionText
+        if overlapped(span, _span):
+            return [mention]
+    return []
+
+
+def snp_get_char_span_of_ent(all_tokens, mention):
+    tokens = all_tokens[mention.tokenStartInSentenceInclusive:mention.tokenEndInSentenceExclusive]
+    _span = tokens[0].beginChar, tokens[-1].endChar
+    return _span
+
+
+def snp_get_ents_by_char_span_in_doc_old(span, snp_doc: Document):
     """
     get entity mentions of stanfordnlp document from character span (either contained or occupied by the span)
 
@@ -34,6 +50,11 @@ def snp_get_ents_by_char_span_in_doc(span, snp_doc: Document):
         mention_token_span = snp_get_mention_token_span(mention)
         mention_char_span = toks2chars(mention_token_span, tok2char_map)
         mention_char_spans.append(mention_char_span)
+
+    assert len(mention_char_spans) == len(mentions)
+    for char_span, mention in zip(mention_char_spans, mentions):
+        assert snp_doc.text[slice(*char_span)] == mention.entityMentionText, \
+        ' '.join(['char_span: ', str(char_span[0]), str(char_span[1]), snp_doc.text[slice(*char_span)], 'mention:', mention.entityMentionText])
 
     try:
         ixes, _ = overlapped_range(mention_char_spans, span)
