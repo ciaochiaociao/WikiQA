@@ -160,17 +160,19 @@ class WikiQA:
             name, attr, span, matched_pattern = parsed_result
             print('(ParseQ)', name, '|', attr)
         else:  # skip this question if not matched by our rules/regex
+            print(q_dict['QID'] + '\tnot_parsed\tnot_parsed\t\t\t\t\t', file=file4eval)
             return
         # ===== STEP B. entity linking =====
         ent_link_cands = build_candidates_to_EL(name, question_ie_data, span)
         wd_items = entity_linking(ent_link_cands)
         print('(EL)', [(get_fallback_zh_label_from_dict(i), i['id']) for i in wd_items])
         # ===== STEP C. traverse Wikidata =====
-        datavalues = []
+        datavalues, traversed_items = [], []
         for wd_item in wd_items:
             values = traverse_by_attr_name(wd_item, attr)
             if values:
                 datavalues.extend(values)
+                traversed_items.append(wd_item)
         
         def _pretty_datavalues(datavalues):
             try:  # item
@@ -180,7 +182,7 @@ class WikiQA:
             except TypeError:  # string
                 return datavalues
             
-        print('(Traverse)', _pretty_datavalues(datavalues))
+        print('(Traverse) {} from {}'.format(_pretty_datavalues(datavalues), [i['id'] for i in traversed_items]))
 
         # ===== STEP D. Post Processing datavalues =====
         processed_datavalues = []
