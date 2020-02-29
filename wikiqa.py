@@ -92,7 +92,7 @@ class WikiQA:
                     continue
 
             # filter out unwanted mode
-            if q_dict['AMODE'] in ['Yes-No', 'Comparing-Members', 'Kinship']:
+            if q_dict['AMODE'] in ['Yes-No', 'Comparing-Members', 'Kinship', 'Arithmetic-Operations',  'Multi-Spans-Extraction', 'Counting']:
                 continue
             # if q_dict['ATYPE'] in ['Object']:
             #     continue
