@@ -44,14 +44,20 @@ def default_acand(answer_module, atext, score):
      }
 
 
-def overlapped_range(ranges, overlapper):
+def ranges_overlapped_w_range(ranges, overlapper):
 
     ixes, overlapped_ranges = [], []
     for ix, _range in enumerate(ranges):
-        if set(range(*_range)).intersection(range(*overlapper)):
+        overlapped = overlapped(_range, overlapper)
+        if overlapped:
             ixes.append(ix); overlapped_ranges.append(_range)
 
     return ixes, overlapped_ranges
+
+
+def overlapped(_range, overlapper):
+    overlapped = set(range(*_range)).intersection(range(*overlapper))
+    return overlapped
 
 
 def apply_dict(being_applied, applying_dict):
@@ -102,7 +108,7 @@ def print_multicolor_strs(strs, strs_class, color_table=False,
     print(' '.join(colored_strs), **kwargs)
 
 
-def load_json(json_path):
-    with open(json_path) as f:
+def load_json(json_path, **kwargs):
+    with open(json_path, encoding='utf-8', **kwargs) as f:
         data = json.load(f)
     return data

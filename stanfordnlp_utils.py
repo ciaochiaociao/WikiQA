@@ -10,7 +10,7 @@ from ansi.colour import fg, bg
 from stanfordnlp.protobuf import NERMention, Token, Document, Sentence
 from stanfordnlp.server import CoreNLPClient
 
-from utils import overlapped_range, apply_dict, print_multicolor_strs
+from utils import ranges_overlapped_w_range, apply_dict, print_multicolor_strs, overlapped
 
 
 def get_client(ip='http://140.109.19.191:9000', annotators="tokenize,ssplit,lemma,pos,ner"):
@@ -57,7 +57,7 @@ def snp_get_ents_by_char_span_in_doc_old(span, snp_doc: Document):
         ' '.join(['char_span: ', str(char_span[0]), str(char_span[1]), snp_doc.text[slice(*char_span)], 'mention:', mention.entityMentionText])
 
     try:
-        ixes, _ = overlapped_range(mention_char_spans, span)
+        ixes, _ = ranges_overlapped_w_range(mention_char_spans, span)
         obtained_mentions = [mentions[ix] for ix in ixes]
         return obtained_mentions
         # print(f'NER not found in passage {span[0]} to {span[1]}')

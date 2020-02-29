@@ -7,7 +7,7 @@ from typing import Union, List
 
 from stanfordnlp.protobuf import NERMention, Token
 
-from stanfordnlp_utils import snp_get_ents_by_char_span_in_doc
+from stanfordnlp_utils import snp_get_ents_by_overlapping_char_span_in_doc
 from wikidata4fgc_v2 import get_dicts_from_keyword, clean_and_simplify_wd_items
 
 
@@ -28,7 +28,7 @@ def build_candidates_to_EL(name, question_ie_data, span, use_ner=True, split_dot
 
     # 3. NER mentions containing/occupying the span
     if use_ner:
-        mentions = list(snp_get_ents_by_char_span_in_doc(span, question_ie_data))
+        mentions = list(snp_get_ents_by_overlapping_char_span_in_doc(span, question_ie_data))
         if mentions:
             ent_link_cands.extend(mentions)
 

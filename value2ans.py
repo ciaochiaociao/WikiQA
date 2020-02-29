@@ -5,7 +5,7 @@
 
 from fuzzy_match import build_fuzzy_match_pattern, fuzzy_match
 from config import cc
-from stanfordnlp_utils import snp_get_ents_by_char_span_in_doc
+from stanfordnlp_utils import snp_get_ents_by_overlapping_char_span_in_doc
 
 
 def remove_duplicates(answers, qtext):
@@ -89,7 +89,7 @@ def get_mention_with_matching_passage_and_answer(ans_cand: str, qtext, atype, dt
 
 def get_mention_with_matching_ans_type(span: tuple, qtext, atype, passage_data):
 
-    mentions = list(snp_get_ents_by_char_span_in_doc(span, passage_data))
+    mentions = list(snp_get_ents_by_overlapping_char_span_in_doc(span, passage_data))
     for mention in mentions:
         if match_type(mention, atype, qtext):
             return mention
