@@ -60,6 +60,10 @@ name = '(?P<name>[^的]{2,10}?)'
 is_ = '(叫|是)'
 height = '((总)高度|身高)'
 have = '(有|拥有)'
+
+custom = {
+    '出生年份': '出生日期',
+}
 strict_label_map = {
     '名字': [f'^{name}{is_}{what}名字', f'^{name}(的)?名字{what}', f'^{name}(的)?名字{is_}{what}'],
     # rule 2-1-a: 地方
@@ -71,6 +75,7 @@ strict_label_map = {
             f'^{name}{death_all}{_in}{where_all}', f'{where_all}{is_}{name}的{death_all}'],
     '墓地': [],
     # rule 2-1-b: 时间
+    '出生年份': [f'^{name}(是|{_in})?{which_all}{year}.*{birth_all}', f'^{name}(的)?{birth_all}.*{which_all}{year}'],
     '出生日期': [f'^{name}(的)?生日', f'^{name}(的)?出生日期', f'^{name}(的)?出生日',
              f'^{name}(是|{_in})?{when}.*{birth_all}', f'^{name}(的)?{birth_all}.*{when}'],
     '死亡日期': [f'^{name}(的)?死亡地',

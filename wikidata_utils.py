@@ -6,6 +6,7 @@ import re
 from typing import List
 
 from config import cc
+from predicate_inference_regex import custom
 from wikidata4fgc_v2 import get_all_aliases_from_dict, get_all_aliases_from_id
 
 
@@ -15,6 +16,9 @@ def traverse_by_attr_name(wd_item, attr):
     if attr == '名字':
         aliases = get_all_aliases_from_dict(wd_item)
         return aliases[0] + aliases[1]
+    if attr in custom:
+        attr = custom[attr]
+
     for rel, datavalues in wd_item['claims'].items():
         labels, _ = rel  # only use label to match
         for label in labels:
@@ -22,9 +26,9 @@ def traverse_by_attr_name(wd_item, attr):
                 return datavalues
 
 
-def postprocess_datavalue(datavalue):
+def postprocess_datavalue(datavalue, attr):
     datatype = get_datatype(datavalue)
-    processed_list: List[str] = postprocess(datavalue, datatype)
+    processed_list: List[str] = postprocess(datavalue, datatype, attr)
     return processed_list
 
 
@@ -70,7 +74,7 @@ class WDProperty:
         self.aliases = ...
 
 
-def postprocess(datavalue, datatype):
+def postprocess(datavalue, datatype, attr):
     if datatype == 'wikibase-item':
         object_aliases = datavalue['all_aliases']  # a tuple
         object_aliases = tuple([list(set([cc.convert(name) for name in names])) for names in object_aliases])
@@ -80,16 +84,27 @@ def postprocess(datavalue, datatype):
                         r'T(?P<hour>\d+):(?P<minute>\d+):(?P<second>\d+)\.(?P<millisecond>\d+)Z'
         m = re.match(sutime_format, datavalue['value'])
         year, month, day = int(m.groupdict()['year']), int(m.groupdict()['month']), int(m.groupdict()['day'])
-        time_formats = [
-            '{}年{}月{}日'.format(year, month, day),
-            '{}年{}月{}日'.format((int(year) - 1911), month, day),
-            '{}年{}月{}號'.format(year, month, day),
-            '{}年{}月{}號'.format((int(year) - 1911), month, day),
-            '{}年{}月'.format(year, month),
-            '{}年{}月'.format((int(year) - 1911), month),
-            '{}年'.format(year),
-            '{}年'.format((int(year) - 1911))
-        ]
+        if '年份' in attr:
+            time_formats = [
+                '{}年'.format(year),
+                '{}年'.format((int(year) - 1911))
+            ]
+        elif '月份' in attr:
+            time_formats = [
+                '{}月'.format(month),
+            ]
+        elif '年月' in attr:
+            time_formats = [
+                '{}年{}月'.format(year, month),
+                '{}年{}月'.format((int(year) - 1911), month)
+            ]
+        else:
+            time_formats = [
+                '{}年{}月{}日'.format(year, month, day),
+                '{}年{}月{}日'.format((int(year) - 1911), month, day),
+                '{}年{}月{}号'.format(year, month, day),
+                '{}年{}月{}号'.format((int(year) - 1911), month, day),
+            ]
         postprocessed = time_formats
     elif datatype == 'quantity':
         amount = datavalue['value']['amount']

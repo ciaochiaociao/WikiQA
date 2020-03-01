@@ -57,12 +57,7 @@ def get_text_from_char_b_e(span, stanfordnlp_data):
 
 def get_mention_with_matching_passage_and_answer(ans_cand: str, qtext, atype, dtext: str, passage_ie_data, fuzzy=False):
     # rule 3-1: if fuzzy matching datavalue (answer) with passage text (edit distance <= 1) -> generate answer
-    ans_cand = cc.convert(ans_cand)
-    if fuzzy:
-        pattern = build_fuzzy_match_pattern(ans_cand)
-    else:
-        pattern = ans_cand
-    matches = fuzzy_match(dtext, pattern)
+    ans_cand, matches = match_with_psg(ans_cand, dtext, fuzzy)
 
     if matches:
 
@@ -81,10 +76,20 @@ def get_mention_with_matching_passage_and_answer(ans_cand: str, qtext, atype, dt
                 # if fuzzy_matched[0] != ans_cand[0] and fuzzy_matched[0] == ans_cand[1]:
                 #     fuzzy_matched = fuzzy_matched[1:]
                 return mention.entityMentionText
-            elif mention is None and '朝代' in qtext:
+            elif mention is None and '朝代' in qtext:  # TODO: move to custom attributes
                 return ans_cand
 
     return False
+
+
+def match_with_psg(ans_cand, dtext, fuzzy):
+    ans_cand = cc.convert(ans_cand)
+    if fuzzy:
+        pattern = build_fuzzy_match_pattern(ans_cand)
+    else:
+        pattern = ans_cand
+    matches = fuzzy_match(dtext, pattern)
+    return ans_cand, matches
 
 
 def get_mention_with_matching_ans_type(span: tuple, qtext, atype, passage_data):

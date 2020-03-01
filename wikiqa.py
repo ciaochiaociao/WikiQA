@@ -187,7 +187,7 @@ class WikiQA:
         # ===== STEP D. Post Processing datavalues =====
         processed_datavalues = []
         for value in datavalues:
-            processed_list: List[str] = postprocess_datavalue(value)
+            processed_list: List[str] = postprocess_datavalue(value, attr)
             processed_datavalues.extend(processed_list)
         print('(Post-Proc)', processed_datavalues)
 
