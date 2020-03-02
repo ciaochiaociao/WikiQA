@@ -63,6 +63,7 @@ def get_docs_with_certain_qs(qids, docs):
 
 
 def data_to_csv(docs, f):
+    print('qid', 'qtext', 'atext', 'qtype', 'atype', 'amode', sep='\t', file=f)
     for doc in docs:
         for q in doc['QUESTIONS']:
             print(q['QID'], q['QTEXT_CN'], [ans['ATEXT_CN'] for ans in q['ANSWER']], q['QTYPE'], q['ATYPE'], q['AMODE'], sep='\t', file=f)

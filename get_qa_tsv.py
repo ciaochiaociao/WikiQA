@@ -2,8 +2,11 @@
 #  Unauthorized copying of this file, via any medium is strictly prohibited
 #  Proprietary and confidential
 #  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
-from fgc_utils import filter_out_amodes_and_save
 
+from fgc_utils import data_to_csv
+from utils import load_json
 
-amodes = ['Yes-No', 'Comparing-Members', 'Kinship', 'Arithmetic-Operations',  'Multi-Spans-Extraction', 'Counting']
-filter_out_amodes_and_save('FGC_release_all(cn).json', amodes, 'FGC_release_all(cn)_filtered2.json')
+fgc_path = 'FGC_release_all(cn)_filtered2.json'
+d = load_json(fgc_path)
+with open('fgc_qa_filtered.tsv', 'w', encoding='utf-8') as f:
+    data_to_csv(d, f)
