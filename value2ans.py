@@ -40,30 +40,47 @@ def match_with_psg(ans_cand, dtext, fuzzy):
 
 
 def match_type(mention, ans_type, qtext):
-    # TODO
     anstype: ["Person", 'Date-Duration', 'Location', 'Organization', 'Num-Measure', 'YesNo', 'Kinship', 'Event',
               'Object', 'Misc']
     ansmode: ['Single-Span-Extraction', 'Multi-Spans-Extraction', 'YesNo', 'Arithmetic-Operations', 'Counting',
               'Comparing-Members', 'CommonSense', 'Date-Duration', 'Kinship']
     ent_ans_map = {
         'PERSON': ['Person'],
-        'MISC': ['Object'],
-        'TITLE': ['Organization'],
-        'COUNTRY': ['Organization', 'Location'],
-        'CITY': ['Organization', 'Location'],
-        'GPE': ['Organization', 'Location'],
-        'STATE_OR_PROVINCE': ['Organization', 'Location'],
-        'ORGANIZATION': ['Organization'],
-        'CAUSE_OF_DEATH': ['Event'],
+        'PER': ['Person'],
+        'TITLE': ['Organization', 'Person'],
+
+        'DEGREE': ['Object'],
         'RELIGION': ['Object'],
+        'IDEOLOGY': ['Object'],  #?
+        'EMAIL': ['Object'],
+        'URL': ['Object'],
+        'SET': ['Object'],  #?
+
+        'CRIMINAL_CHARGE': ['Event'],  #?
+        'CAUSE_OF_DEATH': ['Event'],
+
+        'MISC': ['Object', 'Event'],
+
+        'DEMONYM': ['Organization', 'Location'],
+        'CITY': ['Organization', 'Location'],
+        'STATE_OR_PROVINCE': ['Organization', 'Location'],
+        'COUNTRY': ['Organization', 'Location'],
+        'GPE': ['Organization', 'Location'],
+        'LOC': ['Organization', 'Location'],
+
+        'ORGANIZATION': ['Organization'],
+        'ORG': ['Organization'],
         'NATIONALITY': ['Organization'],
-        'IDEOLOGY': ['Object'],
+        'FACILITY': ['Organization'],
+
         'DATE': ['Date-Duration'],
         'TIME': ['Date-Duration'],
+        'DURATION': ['Date-Duration'],
+
         'MONEY': ['Num-Measure'],
         'ORDINAL': ['Num-Measure'],
         'NUMBER': ['Num-Measure'],
-        'FACILITY': ['Organization']
+        'PERCENT': ['Num-Measure']
     }
 
     def _other_rules(qtext, ans_type, ent_ans_map):
