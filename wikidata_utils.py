@@ -77,8 +77,7 @@ class WDProperty:
 def postprocess(datavalue, datatype, attr):
     if datatype == 'wikibase-item':
         object_aliases = datavalue['all_aliases']  # a tuple
-        object_aliases = tuple([list(set([cc.convert(name) for name in names])) for names in object_aliases])
-        postprocessed = [object_aliases]
+        postprocessed = [name for names in object_aliases for name in names]
     elif datatype == 'time':
         sutime_format = r'(?P<year>\d+)-(?P<month>\d+)-(?P<day>\d+)' \
                         r'T(?P<hour>\d+):(?P<minute>\d+):(?P<second>\d+)\.(?P<millisecond>\d+)Z'
@@ -116,6 +115,17 @@ def postprocess(datavalue, datatype, attr):
     else:
         object_value = datavalue['value']
         postprocessed = [object_value]
+
+    # convert Traditional to Simplified
+    postprocessed = [cc.convert(v) for v in postprocessed]
+
+    # remove duplicates
+    postprocessed = list(dict.fromkeys(postprocessed))
+
+    # remove length one for item except for '朝代' attribute
+    if datatype == 'wikibase-item':
+        if attr != '朝代':
+            postprocessed = [v for v in postprocessed if len(v) > 1]
 
     return postprocessed
 
