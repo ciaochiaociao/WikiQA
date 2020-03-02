@@ -101,6 +101,21 @@ strict_label_map = {
 
 }
 
+per_attr = ['名字', '出生地', '死亡地', '墓地', '出生年份', '出生日期', '死亡年份', '死亡日期',
+                      '國籍', '朝代', '职业', '配偶', '父親', '母親', '子女数目', '出生年份', '死亡年份', '朝代']
+other_attr = ['創辦者', '高度', '成立或建立時間']
+
+attr_to_subj_type = dict(zip(per_attr + other_attr,
+                                ['Person'] * len(per_attr) + ['Other'] * len(per_attr)))
+subj_type_to_wd_id = {
+    'Person': 'Q5'
+}
+
+subj_type_to_ent_types = {
+    'Person': ['PERSON', 'PER']
+}
+
+
 # not used
 alias_map = {
     '配偶': ['妻子', '老婆', '配偶'],

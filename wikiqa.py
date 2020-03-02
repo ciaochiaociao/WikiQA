@@ -17,7 +17,7 @@ from wikidata4fgc_v2 import get_fallback_zh_label_from_dict
 from wikidata_utils import traverse_by_attr_name, postprocess_datavalue
 from config import DEFAULT_CORENLP_IP, FGC_KB_PATH, UNKNOWN_MESSAGE
 
-from entity_linking import build_candidates_to_EL, entity_linking
+from entity_linking import build_candidates_to_EL, entity_linking, _get_text_from_token_entity_comp
 from predicate_inference_rules import parse_question_by_regex
 from value2ans import remove_duplicates, longest_answer, match_with_psg, match_type
 
@@ -168,8 +168,9 @@ class WikiQA:
             print(q_dict['QID'] + '\tnot_parsed\tnot_parsed\t\t\t\t\t', file=file4eval)
             return
         # ===== STEP B. entity linking =====
-        ent_link_cands = build_candidates_to_EL(name, question_ie_data, span)
-        wd_items = entity_linking(ent_link_cands)
+        ent_link_cands = build_candidates_to_EL(name, question_ie_data, span, attr)
+        print('(EL Queries)', [_get_text_from_token_entity_comp(cand) for cand in ent_link_cands])
+        wd_items = entity_linking(ent_link_cands, attr)
         print('(EL)', [(get_fallback_zh_label_from_dict(i), i['id']) for i in wd_items])
         # ===== STEP C. traverse Wikidata =====
         datavalues, traversed_items = [], []

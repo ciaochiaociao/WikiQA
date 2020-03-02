@@ -7,11 +7,13 @@ from typing import Union, List
 
 from stanfordnlp.protobuf import NERMention, Token
 
+from predicate_inference_regex import subj_type_to_wd_id, attr_to_subj_type, subj_type_to_ent_types
 from stanfordnlp_utils import snp_get_ents_by_overlapping_char_span_in_doc
 from wikidata4fgc_v2 import get_dicts_from_keyword, clean_and_simplify_wd_items
+from wikidata_utils import traverse_by_attr_name
 
 
-def build_candidates_to_EL(name, question_ie_data, span, use_ner=True, split_dot=True):
+def build_candidates_to_EL(name, question_ie_data, span, attr, use_ner=True, split_dot=True):
 
     ent_link_cands = []
 
@@ -28,6 +30,10 @@ def build_candidates_to_EL(name, question_ie_data, span, use_ner=True, split_dot
     # 3. NER mentions containing/occupying the span
     if use_ner:
         mentions = list(snp_get_ents_by_overlapping_char_span_in_doc(span, question_ie_data))
+
+        # rule: filter out unmatched parsed subject type and NE type
+        mentions = filter_out_unmatched_subj_ne_type(attr, mentions)
+
         if mentions:
             ent_link_cands.extend(mentions)
 
@@ -48,7 +54,31 @@ def entity_linking(ent_link_cands):
     # clean wikidata item and simplify wikidata item
     all_wd_items = clean_and_simplify_wd_items(all_wd_items)
 
+    # rule: filter out unmatched parsed subject type and wikidata item type
+    all_wd_items = filter_out_unmatched_subj_wditem_type(all_wd_items, attr)
+
     return all_wd_items
+
+
+def filter_out_unmatched_subj_ne_type(attr, mentions):
+    try:
+        ent_types = subj_type_to_ent_types[attr_to_subj_type[attr]]
+        return [men for men in mentions if men.ner in ent_types]
+    except KeyError:
+        return mentions
+
+
+def filter_out_unmatched_subj_wditem_type(all_wd_items, attr):
+    try:
+        subj_type_id = subj_type_to_wd_id[attr_to_subj_type[attr]]
+        filtered_items = []
+        for item in all_wd_items:
+            wd_instance_id = traverse_by_attr_name(item, '性質')[0]['value']
+            if wd_instance_id == subj_type_id:
+                filtered_items.append(item)
+        return filtered_items
+    except KeyError:
+        return all_wd_items
 
 
 def build_queries(texts):
