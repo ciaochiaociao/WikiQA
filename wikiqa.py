@@ -48,7 +48,7 @@ class WikiQA:
         """
         global nlp
         with CoreNLPClient(endpoint=self.corenlp_ip, annotators="tokenize,ssplit,lemma,pos,ner",
-                            start_server=False, properties='chinese') as nlp:
+                            start_server=False) as nlp:
             return self._predict_on_qs_of_one_doc(fgc_data, use_fgc_kb, file4eval)
 
     def _get_from_fgc_kb(self, qtext):
@@ -69,7 +69,8 @@ class WikiQA:
         dtext = fgc_data['DTEXT_CN']
 
         # get IE data for passage
-        passage_ie_data = nlp.annotate(dtext, properties={'pipelineLanguage': 'zh'})
+        passage_ie_data = nlp.annotate(dtext, properties={'pipelineLanguage': 'zh',
+                                                          'ssplit.boundaryTokenRegex': '[。]|[!?！？]+'})
 
         # output answers
         all_answers = []
@@ -107,11 +108,12 @@ class WikiQA:
             qtext = q_dict['QTEXT_CN']
 
             # get IE data for question
-            # note: don't add ssplit because there is a bug in CoreNLP: the NERMention tokenStartInSentenceInclusive
+            # TODO: don't add ssplit because there is a bug in CoreNLP: the NERMention tokenStartInSentenceInclusive
             # uses the location index in the original text without sentence split rather than with split even with
             # ssplit annotator on
             question_ie_data = nlp.annotate(qtext,
-                                         properties={'pipelineLanguage': 'zh', 'annotators': "tokenize,lemma,pos,ner"})
+                                         properties={'ssplit.boundaryTokenRegex': '[。]|[!?！？]+',
+                                                     'pipelineLanguage': 'zh'})
 
             # for debugging
             if fgc_data['DID'] not in did_shown:
@@ -124,7 +126,10 @@ class WikiQA:
             print('{} {} {}:'.format(q_dict['QID'], fg.brightgray(q_dict['AMODE']), fg.brightgray(q_dict['ATYPE'])), end=' ')
             if len(question_ie_data.sentence) > 1:
                 print('[WARN] question split into two sentences during IE!')
-            snp_pprint(question_ie_data.sentence[0], end='')
+                for sent in question_ie_data.sentence:
+                    snp_pprint(sent, end='|')
+            else:
+                snp_pprint(question_ie_data.sentence[0], end='')
             print('(Gold)', answers)
 
             final_answers = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval)

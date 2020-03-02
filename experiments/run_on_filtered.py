@@ -21,7 +21,7 @@ error_analysis_fpath = 'error_analysis.xlsx'
 with open(fgc_fpath, encoding='utf-8') as f:
     docs = json.load(f)
 
-wiki_qa = WikiQA(server='http://140.109.19.191:9000')
+wiki_qa = WikiQA(server='http://140.109.19.51:9000')
 
 docs = get_docs_with_certain_qs(['D002Q01'], docs)
 
