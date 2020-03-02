@@ -2,10 +2,7 @@
 #   Unauthorized copying of this file, via any medium is strictly prohibited
 #   Proprietary and confidential
 #   Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
-import json
 from copy import deepcopy
-
-from utils import load_json
 
 
 def get_doc(did, docs):
@@ -74,15 +71,4 @@ def q_doc_generator(docs):
         for q in doc['QUESTIONS']:
             yield q, doc
 
-
-def filter_out_amodes_and_save(fgc_fpath, amodes, save_path):
-    docs = load_json(fgc_fpath)
-    g = q_doc_generator(docs)
-    qids = []
-    for q, doc in g:
-        if q['AMODE'] not in amodes:
-            qids.append(q['QID'])
-    newdocs = get_docs_with_certain_qs(qids, docs)
-    with open(save_path, 'w') as f:
-        json.dump(newdocs, f)
 

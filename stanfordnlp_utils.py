@@ -19,12 +19,13 @@ def get_client(ip='http://140.109.19.191:9000', annotators="tokenize,ssplit,lemm
 
 def snp_get_ents_by_overlapping_char_span_in_doc(span, snp_doc):
     all_tokens = [token for sent in snp_doc.sentence for token in sent.token]
+    mentions = []
     for mention in snp_doc.mentions:
         _span = snp_get_char_span_of_ent(all_tokens, mention)
         assert snp_doc.text[slice(*_span)] == mention.entityMentionText
         if overlapped(span, _span):
-            return [mention]
-    return []
+            mentions.append(mention)
+    return mentions
 
 
 def snp_get_char_span_of_ent(all_tokens, mention):
