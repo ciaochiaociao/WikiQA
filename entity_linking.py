@@ -21,10 +21,9 @@ def build_candidates_to_EL(name, question_ie_data, span, use_ner=True, split_dot
     # 2. add more candidates by post-processing (remove 'dot' in subject)
     # '.' or '·' in name, e.g., 馬可.波羅
     if split_dot:
-        if '.' in name:
-            ent_link_cands.append(''.join(name.split('.')))
-        if '·' in name:
-            ent_link_cands.append(''.join(name.split('·')))
+        for dot in '.·‧':
+            if dot in name:
+                ent_link_cands.append(''.join(name.split(dot)))
 
     # 3. NER mentions containing/occupying the span
     if use_ner:
