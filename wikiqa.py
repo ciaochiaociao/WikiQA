@@ -2,7 +2,7 @@
 #   Unauthorized copying of this file, via any medium is strictly prohibited
 #   Proprietary and confidential
 #   Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
-from typing import List, Dict, TextIO
+from typing import List, Dict, TextIO, Match
 import json
 
 from ansi.colour import fg
@@ -12,14 +12,14 @@ from os.path import join, abspath, dirname
 from stanfordnlp.server import CoreNLPClient
 
 from fgc_utils import get_doc_with_one_que
-from stanfordnlp_utils import snp_pprint
+from stanfordnlp_utils import snp_pprint, snp_get_ents_by_overlapping_char_span_in_doc
 from wikidata4fgc_v2 import get_fallback_zh_label_from_dict
 from wikidata_utils import traverse_by_attr_name, postprocess_datavalue
 from config import DEFAULT_CORENLP_IP, FGC_KB_PATH, UNKNOWN_MESSAGE
 
 from entity_linking import build_candidates_to_EL, entity_linking
 from predicate_inference_rules import parse_question_by_regex
-from value2ans import gen_anses_from_postprocessed_value, remove_duplicates, longest_answer
+from value2ans import remove_duplicates, longest_answer, match_with_psg, match_type
 
 # fix bug: google.protobuf.message.DecodeError: Error parsing message
 # ref: https://github.com/stanfordnlp/stanfordnlp/issues/154
@@ -197,19 +197,43 @@ class WikiQA:
         print('(Post-Proc)', processed_datavalues)
 
         # ===== STEP E. Coordinating with Passage =====
-        final_answers = []  # answers_from_one_ent_link_query
-        for dvalue_comp in processed_datavalues:
-            answers_from_one_datavalue = gen_anses_from_postprocessed_value(dvalue_comp, qtext, q_dict['ATYPE'], dtext,
-                                                                            passage_ie_data)
-            final_answers.extend(answers_from_one_datavalue)
-        final_answers = list(remove_duplicates(final_answers, qtext))
+        answers = []
+        # rule 3-1: if fuzzy matching datavalue (answer) with passage text (edit distance <= 1) -> generate answer
+        print('(Match)', end=' ')
+        matches = []
+        for dvalue_str in processed_datavalues:
+            ms: List[Match] = match_with_psg(dvalue_str, dtext, fuzzy=False)
+            matches.extend(ms)
+            print(bool(ms), end=' ')
+        print()
+
+        # rule: Add matched text to answers (not matcher)
+        answers.extend([match.group(0) for match in matches])
+        print('(Answers 1)', answers)
+
+        # rule: find the matched NE in the passage
+        mentions = []
+        if matches:
+            for match in matches:
+                mentions.extend(list(snp_get_ents_by_overlapping_char_span_in_doc(match.span(0), passage_ie_data)))
+        print('(NE)', [mention.entityMentionText for mention in mentions])
+
+        # rule: match ans type and mention type
+        mentions = [mention for mention in mentions if match_type(mention, q_dict['ATYPE'], qtext)]
+        print('(NE-ANS Type Match)', [mention.entityMentionText for mention in mentions])
+
+        # rule: Use matched NE (expansion/diminishing) from psg as answers
+        if attr not in ['朝代', '出生年份', '死亡年份']:
+            answers.extend([mention.entityMentionText for mention in mentions])
+        print('(Answers 2)', answers)
+
+        final_answers = list(remove_duplicates(answers, qtext))
         print('(VALID)', final_answers)
 
         # ===== STEP F. Final Decision =====
         final_answer = longest_answer(final_answers)
         print('(WikiQA)', final_answer)
-        
-        
+
         # output stage-by-stage results for evaluation
         if file4eval:
             print(q_dict['QID'],
@@ -222,51 +246,6 @@ class WikiQA:
                   final_answer, sep='\t', file=file4eval, flush=True)
 
         return final_answer
-
-
-def evaluate(dtext, predicted_ans, answers) -> str:
-    prediction_result = 'wrong'
-    # print('==========================================')
-    # print('data value matched (predicted answer):', predicted_ans, 'gold:', answers)
-    # highlight(dtext, predicted_ans, True)
-    # evaluate performance
-    # rule 3: datavalue(answer) matching passage text
-    if predicted_ans in answers:
-        # print('Exactly Match Gold Answer :)')
-        prediction_result = 'exact_match'
-    else:
-        for answer in answers:
-            if predicted_ans in answer:
-                # print('Partially Match Gold Answer (substring of gold answer) :|')
-                prediction_result = 'partial_match (substr)'
-            elif answer in predicted_ans:
-                # print('Partially Match Gold Answer (super-string of gold answer) :|')
-                prediction_result = 'partial_match (superstr)'
-            elif set(predicted_ans) <= set(answer) or set(predicted_ans) >= set(answer):
-                # print('Partially Match Gold Answer (set) :|')
-                prediction_result = 'partial_match (set)'
-            else:
-                pass
-    return prediction_result
-
-
-# def save_results(prediction_result, ans_cand, answer_match_way):
-#     # q_dict, wd_item, matched_attr_names, predicate_matched are global variables
-#     prediction_results.append(
-#         {'QID': q_dict['QID'],
-#          'QTEXT': q_dict['QTEXT_CN'],
-#          'AMODE': q_dict['AMODE'],
-#          'ATYPE': q_dict['ATYPE'],
-#          'ANS': [a['ATEXT_CN'] for a in q_dict['ANSWER']],
-#          'prediction_result': prediction_result,
-#          'wd_item': wd_item['id'],
-#          'wd_item_name': get_fallback_zh_label_from_dict(
-#              wd_item),
-#          'predicate': attr,
-#          'predicted_ans': ans_cand,
-#          # 'predicate_matched': predicate_matched,
-#          'answer_match_way': answer_match_way
-#          })
 
 
 if __name__ == '__main__':
