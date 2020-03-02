@@ -40,7 +40,17 @@ def build_candidates_to_EL(name, question_ie_data, span, attr, use_ner=True, spl
     return ent_link_cands
 
 
-def entity_linking(ent_link_cands):
+def filter_out_items_wo_inst_attr(all_wd_items):
+
+    items = []
+    for item in all_wd_items:
+        inst = traverse_by_attr_name(item, '性質')
+        if inst is not None and len(inst) != 0:
+            items.append(item)
+    return items
+
+
+def entity_linking(ent_link_cands, attr):
 
     # build queries
     ent_link_queries = build_queries(ent_link_cands)
@@ -53,6 +63,9 @@ def entity_linking(ent_link_cands):
 
     # clean wikidata item and simplify wikidata item
     all_wd_items = clean_and_simplify_wd_items(all_wd_items)
+
+    # rule: filter out items w/o instance attribute
+    all_wd_items = filter_out_items_wo_inst_attr(all_wd_items)
 
     # rule: filter out unmatched parsed subject type and wikidata item type
     all_wd_items = filter_out_unmatched_subj_wditem_type(all_wd_items, attr)
