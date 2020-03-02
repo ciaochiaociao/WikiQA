@@ -63,6 +63,8 @@ have = '(有|拥有)'
 
 custom = {
     '出生年份': '出生日期',
+    '死亡年份': '死亡日期',
+    '朝代': '國籍'
 }
 strict_label_map = {
     '名字': [f'^{name}{is_}{what}名字', f'^{name}(的)?名字{what}', f'^{name}(的)?名字{is_}{what}'],
@@ -78,14 +80,17 @@ strict_label_map = {
     '出生年份': [f'^{name}(是|{_in})?{which_all}{year}.*{birth_all}', f'^{name}(的)?{birth_all}.*{which_all}{year}'],
     '出生日期': [f'^{name}(的)?生日', f'^{name}(的)?出生日期', f'^{name}(的)?出生日',
              f'^{name}(是|{_in})?{when}.*{birth_all}', f'^{name}(的)?{birth_all}.*{when}'],
+    '死亡年份': [f'^{name}(是|{_in})?{which_all}{year}.*{death_all}', f'^{name}(的)?{death_all}.*{which_all}{year}'],
     '死亡日期': [f'^{name}(的)?死亡地',
              f'^{name}(是|{_in})?{when}.*{death_all}', f'^{name}(的)?{death_all}.*{when}'],
     '成立或建立時間': [f'^{name}(的)?{start}.*{time}',
                 f'^{name}(是|{_in})?{when}.*{start}', f'^{name}{start}.*{when}'],
     # rule 2-1-c: 人物资讯
-    '國籍': [f'^{name}的国籍', f'^{name}{is_}{what_which}(朝代|国籍)',
-           f'^{name}(的)?{birth_all}.*{what_which}({country}|朝代|国籍)', f'^{name}({is_})?{what_which}({country}|朝代|国籍){birth_all}',
-           f'^{name}{is_}{what_which}({country}|朝代|国籍)(的)?人', f'^{name}({is_})?{what_which}({country}|朝代)来'],
+    '國籍': [f'^{name}的国籍', f'^{name}{is_}{what_which}国籍',
+           f'^{name}(的)?{birth_all}.*{what_which}({country}|国籍)', f'^{name}({is_})?{what_which}({country}|国籍){birth_all}',
+           f'^{name}{is_}{what_which}({country}|国籍)(的)?人', f'^{name}({is_})?{what_which}{country}来'],
+    '朝代': [f'^{name}(的)?{birth_all}.*{what_which}朝代', f'^{name}({is_})?{what_which}朝代{birth_all}',
+           f'^{name}{is_}{what_which}朝代'],
     '职业': ['职(位|业|务)', '工作', '职称', '岗位'],
     '創辦者': [f'{found}(人|者)', f'{who}.*{found}', f'{start}.*{found}'],
     '高度': [f'^{name}(的)?{height}'],
