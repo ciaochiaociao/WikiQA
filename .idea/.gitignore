@@ -1,10 +1,6 @@
 # Default ignored files
 /workspace.xml
-
-# Project exclude paths
-/.
-
-
+/shelf/
 
 # Project exclude paths
 /.

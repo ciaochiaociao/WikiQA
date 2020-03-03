@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData">
+  <component name="PublishConfigData" autoUpload="On explicit save action" serverName="cwhsu@51:wiki_kb_inference" autoUploadExternalChanges="true">
     <serverData>
-      <paths name="cwhsu@51:WikiQA">
+      <paths name="cwhsu@51:wiki_kb_inference">
         <serverdata>
           <mappings>
-            <mapping deploy="/WikiQA" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/workspace/wiki_kb_inference" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
@@ -17,5 +17,6 @@
         </serverdata>
       </paths>
     </serverData>
+    <option name="myAutoUpload" value="ON_EXPLICIT_SAVE" />
   </component>
 </project>
