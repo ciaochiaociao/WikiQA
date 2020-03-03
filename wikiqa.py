@@ -12,6 +12,7 @@ from os.path import join, abspath, dirname
 from stanfordnlp.server import CoreNLPClient
 
 from fgc_utils import get_doc_with_one_que
+from predicate_inference_neural import parse_question_w_neural
 from stanfordnlp_utils import snp_pprint, snp_get_ents_by_overlapping_char_span_in_doc
 from wikidata4fgc_v2 import get_fallback_zh_label_from_dict
 from wikidata_utils import traverse_by_attr_name, postprocess_datavalue
@@ -39,8 +40,10 @@ class WikiQA:
         with open(join(cur_path, FGC_KB_PATH), 'r', encoding='utf-8') as f:
             self.kbqa_sheet = json.load(f)
 
-    def predict_on_qs_of_one_doc(self, fgc_data, use_fgc_kb: bool = True, file4eval: TextIO = None) -> List[List[Dict]]:
+    def predict_on_qs_of_one_doc(self, fgc_data, use_fgc_kb: bool = True, file4eval: TextIO = None,
+                                 neural_pred_infer: bool =False) -> List[List[Dict]]:
         """
+        :param bool neural_pred_infer: if using neural model to inference predicate (e.g. PID in wikidata)
         :param Dict fgc_data: fgc data at the level of document, i.e., one document with multiple questions
         :param bool use_fgc_kb: if using fgc kb to answer before the wiki-based QA module
         :param TextIO file4eval: the file to save stage-by-stage results for evaluation
@@ -49,13 +52,13 @@ class WikiQA:
         global nlp
         with CoreNLPClient(endpoint=self.corenlp_ip, annotators="tokenize,ssplit,lemma,pos,ner",
                             start_server=False) as nlp:
-            return self._predict_on_qs_of_one_doc(fgc_data, use_fgc_kb, file4eval)
+            return self._predict_on_qs_of_one_doc(fgc_data, use_fgc_kb, file4eval, neural_pred_infer)
 
     def _get_from_fgc_kb(self, qtext):
         if qtext in self.kbqa_sheet:
             return self.kbqa_sheet[qtext]
 
-    def _predict_on_qs_of_one_doc(self, fgc_data: dict, use_fgc_kb: bool, file4eval) -> List[List[Dict]]:
+    def _predict_on_qs_of_one_doc(self, fgc_data: dict, use_fgc_kb: bool, file4eval, neural_pred_infer) -> List[List[Dict]]:
         # global q_dict, wd_item, rel, attr, predicate_matched, question_ie_data, passage_ie_data, mentions_bracketed, \
         #     dtext, answers, if_evaluate, qtext, debug_info
 
@@ -132,7 +135,8 @@ class WikiQA:
                 snp_pprint(question_ie_data.sentence[0], end='')
             print('(Gold)', answers)
 
-            final_answers = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval)
+            final_answers = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval,
+                                         neural_pred_infer)
 
             # ===== FINISHING STEP =====
             # transfer to FGC output api format
@@ -158,11 +162,14 @@ class WikiQA:
         #     df.to_csv('result.csv')
         return all_answers
 
-    def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval):
+    def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval, neural_pred_infer):
         # ===== STEP A. parse question (parse entity name + predicate inference) =====
-        parsed_result = parse_question_by_regex(qtext)
+        if neural_pred_infer:
+            parsed_result = parse_question_w_neural(qtext)
+        else:
+            parsed_result = parse_question_by_regex(qtext)
         if parsed_result:
-            name, attr, span, matched_pattern = parsed_result
+            name, attr, span = parsed_result
             print('(ParseQ)', name, '|', attr)
         else:  # skip this question if not matched by our rules/regex
             print(q_dict['QID'] + '\tnot_parsed\tnot_parsed\t\t\t\t\t', file=file4eval)

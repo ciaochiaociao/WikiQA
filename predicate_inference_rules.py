@@ -19,6 +19,7 @@ def parse_question_by_regex(qtext):
             pattern = re.compile(pattern)
             result = pattern.search(qtext)
             if result and 'name' in result.groupdict():
-                return result.groupdict()['name'], attr, result.span(1), pattern.pattern
+                # return result.groupdict()['name'], attr, result.span(1), pattern.pattern
+                return result.groupdict()['name'], attr, result.span(1)
 
     return False
