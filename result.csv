@@ -1,4 +1,0 @@
-,QID,QTEXT,AMODE,ATYPE,ANS,prediction_result,wd_item,wd_item_name,predicate,predicted_ans,answer_match_way
-0,D001Q03,苏东坡的爸爸叫什么名字?,Single-Span-Extraction,Person,['苏洵'],exact_match,Q36020,蘇軾,父親,苏洵,
-1,D001Q09,辛弃疾是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['南宋'],wrong,Q1155987,辛弃疾,國籍,宋代,
-2,D001Q09,辛弃疾是哪一个朝代的人？,Single-Span-Extraction,Date-Duration,['南宋'],partial_match (substr),Q1155987,辛弃疾,國籍,宋,

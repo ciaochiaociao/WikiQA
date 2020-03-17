@@ -72,3 +72,17 @@ def q_doc_generator(docs):
             yield q, doc
 
 
+def get_amode(qid, amode, docs):
+    return get_que(qid, docs)['AMODE'][amode]
+
+
+def get_golds_from_qid(qid, docs):
+    return [a['ATEXT'] for a in get_que(qid, docs)['ANSWER']]
+
+
+def g_doc_errors_gen(docs):
+    for q, doc in q_doc_generator(docs):
+        golds = [a['ATEXT']for a in q['ANSWER']]
+        pred = q['AFINAL']['ATEXT_TW']
+        if pred not in golds:
+            yield q, doc
