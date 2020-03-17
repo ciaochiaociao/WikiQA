@@ -4,12 +4,12 @@
 #  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
 import pandas
 
-from neural_predicate_inference.predict import predicate_inference
-from utils import load_json
-from fgc_utils import *
-from wikidata4fgc_v2 import *
+from .predict import predicate_inference
+from ...utils.utils import load_json
+from ...utils.fgc_utils import *
+from ...utils.wikidata4fgc_v2 import *
 
-docs = load_json('../FGC_release_all(cn)_filtered2.json')
+docs = load_json('../../../data/processed/FGC_release_all(cn)_filtered2.json')
 g = q_doc_generator(docs)
 qids, qtexts, pids, atexts, plabels = [], [], [], [], []
 

@@ -5,12 +5,9 @@
 
 import json
 
-import pandas
-
-from error_analysis import error_analysis
-from evaluation import evaluate
-from fgc_utils import get_docs_with_certain_qs
-from wikiqa import WikiQA
+from fgc_wiki_qa.metrics.error_analysis import error_analysis
+from fgc_wiki_qa.metrics.evaluation import evaluate
+from fgc_wiki_qa.models.wikiqa import WikiQA
 
 fgc_fpath = '../FGC_release_all(cn)_filtered2.json'
 file4eval_fpath = 'file4eval_filtered.tsv'

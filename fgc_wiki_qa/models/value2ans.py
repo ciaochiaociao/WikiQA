@@ -1,9 +1,9 @@
-#   Copyright (c) 2020. The NLU Lab, Institute of Information Science, Academia Sinica - All Rights Reserved
-#   Unauthorized copying of this file, via any medium is strictly prohibited
-#   Proprietary and confidential
-#   Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
+#  Copyright (c) 2020. The NLU Lab, Institute of Information Science, Academia Sinica - All Rights Reserved
+#  Unauthorized copying of this file, via any medium is strictly prohibited
+#  Proprietary and confidential
+#  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
 
-from fuzzy_match import build_fuzzy_match_pattern, fuzzy_match
+from ..utils.fuzzy_match import build_fuzzy_match_pattern, fuzzy_match
 
 
 def remove_duplicates(answers, qtext):
@@ -67,10 +67,10 @@ def match_type(mention, ans_type, qtext):
         'COUNTRY': ['Organization', 'Location'],
         'GPE': ['Organization', 'Location'],
         'LOC': ['Organization', 'Location'],
+        'NATIONALITY': ['Location'],
 
         'ORGANIZATION': ['Organization'],
         'ORG': ['Organization'],
-        'NATIONALITY': ['Organization'],
         'FACILITY': ['Organization'],
 
         'DATE': ['Date-Duration'],

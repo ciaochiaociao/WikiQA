@@ -3,8 +3,11 @@
 #   Proprietary and confidential
 #   Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
 
+# TODO: add dependency injection (specifically, add a class that can be instantiated with IP address)
+# TODO: move configuration information, e.g., host and port, to .env file
+
 from pymongo import MongoClient
-from typing import Dict, List
+from typing import Dict
 from opencc import OpenCC
 
 cc3 = OpenCC('s2t')

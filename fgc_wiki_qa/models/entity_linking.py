@@ -1,16 +1,16 @@
-#   Copyright (c) 2020. The NLU Lab, Institute of Information Science, Academia Sinica - All Rights Reserved
-#   Unauthorized copying of this file, via any medium is strictly prohibited
-#   Proprietary and confidential
-#   Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
+#  Copyright (c) 2020. The NLU Lab, Institute of Information Science, Academia Sinica - All Rights Reserved
+#  Unauthorized copying of this file, via any medium is strictly prohibited
+#  Proprietary and confidential
+#  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
 
 from typing import Union, List
 
 from stanfordnlp.protobuf import NERMention, Token
 
-from predicate_inference_regex import subj_type_to_wd_id, attr_to_subj_type, subj_type_to_ent_types
-from stanfordnlp_utils import snp_get_ents_by_overlapping_char_span_in_doc
-from wikidata4fgc_v2 import get_dicts_from_keyword, clean_and_simplify_wd_items
-from wikidata_utils import traverse_by_attr_name
+from .predicate_inference_regex import subj_type_to_wd_id, attr_to_subj_type, subj_type_to_ent_types
+from ..utils.stanfordnlp_utils import snp_get_ents_by_overlapping_char_span_in_doc
+from ..utils.wikidata4fgc_v2 import get_dicts_from_keyword, clean_and_simplify_wd_items
+from ..utils.wikidata_utils import traverse_by_attr_name
 
 
 def build_candidates_to_EL(name, question_ie_data, span, attr, use_ner=True, split_dot=True):

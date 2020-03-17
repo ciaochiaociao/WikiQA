@@ -1,7 +1,7 @@
-#   Copyright (c) 2020. The NLU Lab, Institute of Information Science, Academia Sinica - All Rights Reserved
-#   Unauthorized copying of this file, via any medium is strictly prohibited
-#   Proprietary and confidential
-#   Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
+#  Copyright (c) 2020. The NLU Lab, Institute of Information Science, Academia Sinica - All Rights Reserved
+#  Unauthorized copying of this file, via any medium is strictly prohibited
+#  Proprietary and confidential
+#  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
 
 import re
 from typing import List, Union
@@ -10,7 +10,7 @@ from ansi.colour import fg, bg
 from stanfordnlp.protobuf import NERMention, Token, Document, Sentence
 from stanfordnlp.server import CoreNLPClient
 
-from utils import ranges_overlapped_w_range, apply_dict, print_multicolor_strs, overlapped
+from .utils import ranges_overlapped_w_range, apply_dict, get_multicolor_strs, overlapped
 
 
 def get_client(ip='http://140.109.19.191:9000', annotators="tokenize,ssplit,lemma,pos,ner"):
@@ -32,6 +32,86 @@ def snp_get_char_span_of_ent(all_tokens, mention):
     tokens = all_tokens[mention.tokenStartInSentenceInclusive:mention.tokenEndInSentenceExclusive]
     _span = tokens[0].beginChar, tokens[-1].endChar
     return _span
+
+
+def snp_get_char_span_of_ent_in_sent(all_tokens, mention, doc: Document):
+    _span = snp_get_char_span_of_ent(all_tokens, mention)
+    sent_char_offset = doc.sentence[mention.sentenceIndex].characterOffsetBegin
+    _span = _span[0] - sent_char_offset, _span[1] - sent_char_offset
+    return _span
+
+
+def snp_get_ner_tuples_from_sent(sent: Sentence, doc: Document):
+    ner_tuples = [(*snp_get_char_span_of_ent_in_sent([t for s in doc.sentence for t in s.token], m, doc), m.ner) for m in
+                  sent.mentions]
+    return ner_tuples
+
+
+def snp_get_ner_tuples_from_doc(doc: Document):
+    ner_tuples = [(*snp_get_char_span_of_ent([t for s in doc.sentence for t in s.token], m), m.ner) for m in
+                  doc.mentions]
+    return ner_tuples
+
+
+def snp_get_sent_text(sent, doc):
+    return doc.text[sent.token[0].beginChar:sent.token[-1].endChar]
+
+
+def snp_pprint_by_displacy(data, doc=None, **kwargs):
+    from spacy import displacy
+
+    if isinstance(data, Document):
+        ner_tuples = snp_get_ner_tuples_from_doc(data)
+        text = data.text
+    elif isinstance(data, Sentence):
+        ner_tuples = snp_get_ner_tuples_from_sent(data, doc)
+        text = snp_get_sent_text(data, doc)
+    else:
+        raise ValueError
+    ner_dicts = [{"start": start, "end": end, "label": ner} for start, end, ner in ner_tuples]
+
+    ex = [{"text": text,
+           "ents": ner_dicts,
+           "title": None}]
+    colors = {
+        "ORG": "#7aecec",
+        "ORGANIZATION": "#7aecec",
+        "FACILITY": "#7aecec",
+
+        "LOC": "#feca74",
+        "LOCATION": "#feca74",
+
+        "GPE": "#ff9561",
+        "COUNTRY": "#ff9561",
+        "STATE_OR_PROVINCE": "#ff9561",
+        "CITY": "#ff9561",
+        "DEMONYM": "#ff9561",
+
+        "NATIONALITY": "#ffeb80",
+
+        "PER": "#aa9cfc",
+        "PERSON": "#aa9cfc",
+
+        "TITLE": "#9cc9cc",
+
+        "EVENT": "#ff8197",
+        "CAUSE_OF_DEATH": "#ff8197",
+        "CRIMINAL_CHARGE": "#ff8197",
+
+        "RELIGION": "#f0d0ff",
+        "IDEOLOGY": "#c887fb",
+        "MISC": "#bfeeb7",
+
+        "DATE": "#bfe1d9",
+        "TIME": "#bfe1d9",
+
+        "MONEY": "#e4e7d2",
+        "QUANTITY": "#e4e7d2",
+        "ORDINAL": "#e4e7d2",
+        "CARDINAL": "#e4e7d2",
+        "PERCENT": "#e4e7d2",
+    }
+    displacy.render(ex, style="ent", manual=True, jupyter=True, options={'colors': colors}, **kwargs)
 
 
 def snp_get_ents_by_char_span_in_doc_old(span, snp_doc: Document):
@@ -102,12 +182,7 @@ def toks2chars(token_indexes, tok2char_map):
     return char_span
 
 
-def snp_pprint(snp_sent: Sentence, mode: Union['color', 'bracket'] = 'color', **kwargs):
-    tokens = snp_sent.token
-    token_texts = [token.originalText for token in tokens]
-    token_ners = [token.fineGrainedNER for token in tokens]
-
-    color_table = {
+color_table = {
         'PERSON': bg.red,
         'TITLE': fg.red,
         'NATIONALITY': lambda x: fg.red(bg.cyan(x)),
@@ -120,6 +195,7 @@ def snp_pprint(snp_sent: Sentence, mode: Union['color', 'bracket'] = 'color', **
         'FACILITY': lambda x: fg.blue(bg.magenta(x)),
         'MISC': fg.magenta,
         'DATE': bg.blue,
+        'DYNASTY': lambda x: fg.boldgreen(bg.blue(x)),
         'TIME': fg.blue,
         'NUMBER': fg.yellow,
         'PERCENT': lambda x: fg.blue(bg.yellow(x)),
@@ -132,8 +208,21 @@ def snp_pprint(snp_sent: Sentence, mode: Union['color', 'bracket'] = 'color', **
         'CRIMINAL_CHARGE': lambda x: fg.red(bg.darkgray(x)),
         'O': fg.default
     }
+
+
+def snp_print_legends():
+    print(get_multicolor_strs(color_table.keys(), color_table.keys(), color_table, all_classes=color_table.keys()))
+
+
+def snp_pstr(snp_sent: Sentence, mode: Union['color', 'bracket', 'custom'] = 'color'):
+    tokens = snp_sent.token
+    token_texts = [token.originalText for token in tokens]
+    token_ners = [token.fineGrainedNER for token in tokens]
+
     if mode == 'color':
-        print_multicolor_strs(token_texts, token_ners, color_table, **kwargs)
+        return get_multicolor_strs(token_texts, token_ners, color_table, all_classes=color_table.keys())
+    elif mode == 'custom':
+        return get_multicolor_strs(token_texts, token_ners, all_classes=color_table.keys())
     elif mode == 'bracket':
         pass  #TODO
 

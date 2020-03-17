@@ -5,8 +5,8 @@
 
 from unittest import TestCase
 
-from neural_predicate_inference.predict import predicate_inference
-from predicate_inference_neural import parse_question_w_neural
+from src.models.neural_predicate_inference.predict import predicate_inference
+from src.models.predicate_inference_neural import parse_question_w_neural
 
 
 class Test(TestCase):

@@ -1,30 +1,32 @@
-#   Copyright (c) 2020. The NLU Lab, Institute of Information Science, Academia Sinica - All Rights Reserved
-#   Unauthorized copying of this file, via any medium is strictly prohibited
-#   Proprietary and confidential
-#   Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
+#  Copyright (c) 2020. The NLU Lab, Institute of Information Science, Academia Sinica - All Rights Reserved
+#  Unauthorized copying of this file, via any medium is strictly prohibited
+#  Proprietary and confidential
+#  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
 from typing import List, Dict, TextIO, Match
 import json
 
 from ansi.colour import fg
 from google.protobuf.pyext._message import SetAllowOversizeProtos
-from os.path import join, abspath, dirname
+from os.path import abspath, dirname
 
 from stanfordnlp.server import CoreNLPClient
 
-from fgc_utils import get_doc_with_one_que
-from predicate_inference_neural import parse_question_w_neural
-from stanfordnlp_utils import snp_pprint, snp_get_ents_by_overlapping_char_span_in_doc
-from wikidata4fgc_v2 import get_fallback_zh_label_from_dict
-from wikidata_utils import traverse_by_attr_name, postprocess_datavalue
-from config import DEFAULT_CORENLP_IP, FGC_KB_PATH, UNKNOWN_MESSAGE
+from ..utils.fgc_utils import get_doc_with_one_que
+from .predicate_inference_neural import parse_question_w_neural
+from ..utils.stanfordnlp_utils import snp_pstr, snp_get_ents_by_overlapping_char_span_in_doc
+from ..utils.wikidata4fgc_v2 import get_fallback_zh_label_from_dict
+from ..utils.wikidata_utils import traverse_by_attr_name, postprocess_datavalue
+from ..config import DEFAULT_CORENLP_IP, FGC_KB_PATH
 
-from entity_linking import build_candidates_to_EL, entity_linking, _get_text_from_token_entity_comp
-from predicate_inference_rules import parse_question_by_regex
-from value2ans import remove_duplicates, longest_answer, match_with_psg, match_type
+from .entity_linking import build_candidates_to_EL, entity_linking, _get_text_from_token_entity_comp
+from .predicate_inference_rules import parse_question_by_regex
+from .value2ans import remove_duplicates, longest_answer, match_with_psg, match_type
 
 # fix bug: google.protobuf.message.DecodeError: Error parsing message
 # ref: https://github.com/stanfordnlp/stanfordnlp/issues/154
 SetAllowOversizeProtos(True)
+
+UNKNOWN_MESSAGE = 'Unknown in evaluation mode (if_evaluate=True)'
 
 # global variables
 prediction_results = []
@@ -36,9 +38,19 @@ class WikiQA:
         self.if_evaluate = True  # evaluate the performance
 
         # FGC KB
-        cur_path = dirname(abspath(__file__))
-        with open(join(cur_path, FGC_KB_PATH), 'r', encoding='utf-8') as f:
+        with open(FGC_KB_PATH, 'r', encoding='utf-8') as f:
             self.kbqa_sheet = json.load(f)
+
+    def predict_on_docs(self, docs, file4eval_fpath, neural_pred_infer, use_fgc_kb):
+        all_answers = []
+        with open(file4eval_fpath, 'w', encoding='utf-8') as file4eval:
+            print('qid\tparsed_subj\tparsed_pred\tsid\tpretty_values\tproc_values\tanswers\tanswer', file=file4eval)
+            for doc in docs:
+                answers = self.predict_on_qs_of_one_doc(doc, use_fgc_kb=use_fgc_kb, file4eval=file4eval,
+                                                           neural_pred_infer=neural_pred_infer)
+                all_answers.extend(answers)
+                print(answers)
+        print(all_answers)
 
     def predict_on_qs_of_one_doc(self, fgc_data, use_fgc_kb: bool = True, file4eval: TextIO = None,
                                  neural_pred_infer: bool =False) -> List[List[Dict]]:
@@ -51,7 +63,7 @@ class WikiQA:
         """
         global nlp
         with CoreNLPClient(endpoint=self.corenlp_ip, annotators="tokenize,ssplit,lemma,pos,ner",
-                            start_server=False) as nlp:
+                           start_server=False) as nlp:
             return self._predict_on_qs_of_one_doc(fgc_data, use_fgc_kb, file4eval, neural_pred_infer)
 
     def _get_from_fgc_kb(self, qtext):
@@ -115,8 +127,8 @@ class WikiQA:
             # uses the location index in the original text without sentence split rather than with split even with
             # ssplit annotator on
             question_ie_data = nlp.annotate(qtext,
-                                         properties={'ssplit.boundaryTokenRegex': '[。]|[!?！？]+',
-                                                     'pipelineLanguage': 'zh'})
+                                            properties={'ssplit.boundaryTokenRegex': '[。]|[!?！？]+',
+                                                        'pipelineLanguage': 'zh'})
 
             # for debugging
             if fgc_data['DID'] not in did_shown:
@@ -124,15 +136,15 @@ class WikiQA:
                 print('{} (tokenized, hans):'.format(fgc_data['DID']))
                 for sent in passage_ie_data.sentence:
                     print(f'(sent{sent.sentenceIndex})', end=' ')
-                    snp_pprint(sent)
+                    print(snp_pstr(sent))
                 print('\n')
             print('{} {} {}:'.format(q_dict['QID'], fg.brightgray(q_dict['AMODE']), fg.brightgray(q_dict['ATYPE'])), end=' ')
             if len(question_ie_data.sentence) > 1:
                 print('[WARN] question split into two sentences during IE!')
                 for sent in question_ie_data.sentence:
-                    snp_pprint(sent, end='|')
+                    print(snp_pstr(sent), end='|')
             else:
-                snp_pprint(question_ie_data.sentence[0], end='')
+                print(snp_pstr(question_ie_data.sentence[0]), end='')
             print('(Gold)', answers)
 
             final_answers = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval,
@@ -161,7 +173,6 @@ class WikiQA:
         #     print('saving results ...')
         #     df.to_csv('result.csv')
         return all_answers
-
     def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval, neural_pred_infer):
         # ===== STEP A. parse question (parse entity name + predicate inference) =====
         if neural_pred_infer:
@@ -186,7 +197,7 @@ class WikiQA:
             if values:
                 datavalues.extend(values)
                 traversed_items.append(wd_item)
-        
+
         def _pretty_datavalues(datavalues):
             try:  # item
                 return [d['value'] + ' ' + d['all_aliases'][0][0] for d in datavalues]
@@ -194,7 +205,7 @@ class WikiQA:
                 return [d['value'] for d in datavalues]
             except TypeError:  # string
                 return datavalues
-            
+
         print('(Traverse) {} from {}'.format(_pretty_datavalues(datavalues), [i['id'] for i in traversed_items]))
 
         # ===== STEP D. Post Processing datavalues =====
@@ -248,16 +259,16 @@ class WikiQA:
                   name,
                   attr,
                   [i['id'] for i in wd_items],
-                  _pretty_datavalues(datavalues), 
-                  processed_datavalues, 
-                  final_answers, 
+                  _pretty_datavalues(datavalues),
+                  processed_datavalues,
+                  final_answers,
                   final_answer, sep='\t', file=file4eval, flush=True)
 
         return final_answer
 
 
 if __name__ == '__main__':
-    with open('FGC_release_all(cn).json', encoding='utf-8') as f:
+    with open('data/raw/FGC_release_all(cn).json', encoding='utf-8') as f:
         docs = json.load(f)
 
     wiki_qa = WikiQA(server='http://140.109.19.191:9000')

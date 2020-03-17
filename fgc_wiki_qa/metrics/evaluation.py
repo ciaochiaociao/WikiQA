@@ -3,8 +3,8 @@
 #  Proprietary and confidential
 #  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
 import pandas
-from utils import load_json
-from fgc_utils import q_doc_generator, get_docs_with_certain_qs
+from ..utils.utils import load_json
+from ..utils.fgc_utils import q_doc_generator, get_docs_with_certain_qs
 
 
 def get_all_answers(q):

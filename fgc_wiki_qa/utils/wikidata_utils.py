@@ -1,13 +1,13 @@
-#   Copyright (c) 2020. The NLU Lab, Institute of Information Science, Academia Sinica - All Rights Reserved
-#   Unauthorized copying of this file, via any medium is strictly prohibited
-#   Proprietary and confidential
-#   Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
+#  Copyright (c) 2020. The NLU Lab, Institute of Information Science, Academia Sinica - All Rights Reserved
+#  Unauthorized copying of this file, via any medium is strictly prohibited
+#  Proprietary and confidential
+#  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
 import re
 from typing import List
 
-from config import cc
-from predicate_inference_regex import custom
-from wikidata4fgc_v2 import get_all_aliases_from_dict, get_all_aliases_from_id
+from ..config import cc
+from ..models.predicate_inference_regex import custom
+from .wikidata4fgc_v2 import get_all_aliases_from_dict, get_all_aliases_from_id
 
 
 def traverse_by_attr_name(wd_item, attr):

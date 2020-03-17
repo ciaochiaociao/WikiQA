@@ -2,8 +2,8 @@
 #  Unauthorized copying of this file, via any medium is strictly prohibited
 #  Proprietary and confidential
 #  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
-from neural_predicate_inference.predict import predicate_inference
-from wikidata4fgc_v2 import get_all_aliases_from_pid
+from .neural_predicate_inference.predict import predicate_inference
+from ..utils.wikidata4fgc_v2 import get_all_aliases_from_pid
 
 
 def parse_question_w_neural(qtext):
