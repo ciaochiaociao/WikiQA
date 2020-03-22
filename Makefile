@@ -1,38 +1,108 @@
-all: download filter
+.PHONY: all downlad filter process get_qa clean merge
 
-FGC_DATASET_7z_URL?='https://drive.google.com/uc?id=1ofd5U0q7-eUJrs6c4n0AZz2PLgc0KY7q&export=download'
+all: install download filter get_qa merge
+
+install:
+	git clone
+
+# default inputs
 FGC_VER?=1.7.8
 TRAIN_FNAME?=FGC_release_all_train.json
 DEV_FNAME?=FGC_release_all_dev.json
 TEST_FNAME?=FGC_release_all_test.json
+ALL_FNAME?=merged.json
+RAW_DATASET_DIR?=data/raw/$(FGC_VER)
+PROC_DATASET_DIR?=data/processed/$(FGC_VER)
 
-export TRAIN_FNAME DEV_FNAME TEST_FNAME
+# variables
+RAW_TRAIN_FPATH?=$(RAW_DATASET_DIR)/$(TRAIN_FNAME)
+RAW_DEV_FPATH?=$(RAW_DATASET_DIR)/$(DEV_FNAME)
+RAW_TEST_FPATH?=$(RAW_DATASET_DIR)/$(TEST_FNAME)
+RAW_ALL_FPATH=$(RAW_DATASET_DIR)/$(ALL_FNAME)
+PROC_TRAIN_FPATH?=$(PROC_DATASET_DIR)/$(TRAIN_FNAME:.json=_filtered.json)
+PROC_DEV_FPATH?=$(PROC_DATASET_DIR)/$(DEV_FNAME:.json=_filtered.json)
+PROC_TEST_FPATH?=$(PROC_DATASET_DIR)/$(TEST_FNAME:.json=_filtered.json)
+PROC_ALL_FPATH?=$(PROC_DATASET_DIR)/$(ALL_FNAME:.json=_filtered.json)
 
-download:
+
+# download and extract dataset
+download: $(RAW_TRAIN_FPATH) $(RAW_DEV_FPATH) $(RAW_TEST_FPATH)
+FGC_DATASET_7z_URL?='https://drive.google.com/uc?id=1ofd5U0q7-eUJrs6c4n0AZz2PLgc0KY7q&export=download'
+$(RAW_TRAIN_FPATH) $(RAW_DEV_FPATH) $(RAW_TEST_FPATH) :
 	{ \
-	wget -O data/raw/data.7z $(FGC_DATASET_7z_URL); \
-	7z x -odata/raw/$(FGC_VER)/ data/raw/data.7z; \
+	wget -O data/raw/data.7z $(FGC_DATASET_7z_URL) && \
+	7z x -o$(RAW_DATASET_DIR)/ data/raw/data.7z && \
 	rm data/raw/data.7z; \
 	}
 
-process: filter get_qa
+# merge
+merge: $(RAW_ALL_FPATH)
+$(RAW_ALL_FPATH) : $(RAW_TRAIN_FPATH) $(RAW_DEV_FPATH) $(RAW_TEST_FPATH)
+	python3 -m fgc_wiki_qa.data.merge $^ $@
 
-filter:
-	mkdir -p data/processed/$(FGC_VER)
-	python3 filter_dataset.py data/raw/$(FGC_VER)/$(TRAIN_FNAME) "data/processed/$(FGC_VER)/$${TRAIN_FNAME%.*}_filtered.json";
-	python3 filter_dataset.py data/raw/$(FGC_VER)/$(DEV_FNAME) "data/processed/$(FGC_VER)/$${DEV_FNAME%.*}_filtered.json";
-	python3 filter_dataset.py data/raw/$(FGC_VER)/$(TEST_FNAME) "data/processed/$(FGC_VER)/$${TEST_FNAME%.*}_filtered.json";
+# filter
+filter: $(PROC_TRAIN_FPATH) $(PROC_DEV_FPATH) $(PROC_TEST_FPATH) $(PROC_ALL_FPATH)
 
-get_qa: data/processed/$(FGC_VER)/qa_train.tsv data/processed/$(FGC_VER)/qa_dev.tsv data/processed/$(FGC_VER)/qa_test.tsv
+$(PROC_TRAIN_FPATH) : $(RAW_TRAIN_FPATH)
+	python3 -m fgc_wiki_qa.data.filter_dataset $< $@
+$(PROC_DEV_FPATH) : $(RAW_DEV_FPATH)
+	python3 -m fgc_wiki_qa.data.filter_dataset $< $@
+$(PROC_TEST_FPATH) : $(RAW_TEST_FPATH)
+	python3 -m fgc_wiki_qa.data.filter_dataset $< $@
+$(PROC_ALL_FPATH) : $(RAW_ALL_FPATH)
+	python3 -m fgc_wiki_qa.data.filter_dataset $< $@
 
-data/processed/$(FGC_VER)/qa_train.tsv: data/processed/$(FGC_VER)/$(TRAIN_FNAME:%.json=%_filtered.json)
-	python3 get_qa_tsv.py $< $@
+# get_qa
+get_qa: $(PROC_DATASET_DIR)/qa_train.tsv $(PROC_DATASET_DIR)/qa_dev.tsv $(PROC_DATASET_DIR)/qa_test.tsv $(PROC_DATASET_DIR)/qa_all.tsv
 
-data/processed/$(FGC_VER)/qa_dev.tsv: data/processed/$(FGC_VER)/$(DEV_FNAME:%.json=%_filtered.json)
-	python3 get_qa_tsv.py $< $@
+$(PROC_DATASET_DIR)/qa_train.tsv: $(PROC_TRAIN_FPATH)
+	python3 -m fgc_wiki_qa.data.get_qa_tsv $< $@
 
-data/processed/$(FGC_VER)/qa_test.tsv: data/processed/$(FGC_VER)/$(TEST_FNAME:%.json=%_filtered.json)
-	python3 get_qa_tsv.py $< $@
+$(PROC_DATASET_DIR)/qa_dev.tsv: $(PROC_DEV_FPATH)
+	python3 -m fgc_wiki_qa.data.get_qa_tsv $< $@
+
+$(PROC_DATASET_DIR)/qa_test.tsv: $(PROC_TEST_FPATH)
+	python3 -m fgc_wiki_qa.data.get_qa_tsv $< $@
+
+$(PROC_DATASET_DIR)/qa_all.tsv: $(PROC_ALL_FPATH)
+	python3 -m fgc_wiki_qa.data.get_qa_tsv $< $@
+
+
+.PHONY: run run_eval run_exp
+
+#EXP_DIR?=experiments/new
+PRED_INFER?=rule
+
+EVAL_FPATH=$(EXP_DIR)/file4eval_all.tsv
+
+run_exp:
+	mkdir -p $(EXP_DIR)
+	$(MAKE) run
+	$(MAKE) run_eval
+
+run: $(EVAL_FPATH)
+
+$(EVAL_FPATH) : $(PROC_ALL_FPATH)
+	python3 -m fgc_wiki_qa.commands.run_on_fgc \
+		--fgc_fpath $< \
+		--pred_infer $(PRED_INFER) \
+		--eval_fpath $@
+
+
+ERROR_ANALYSIS_FPATH ?= $(EXP_DIR)/error_analysis_all.xlsx
+REPORT_FPATH ?= $(EXP_DIR)/report_all.txt
+QA_FPATH ?= $(PROC_DATASET_DIR)/qa_all.tsv
+
+run_eval: $(ERROR_ANALYSIS_FPATH) $(REPORT_FPATH)
+
+$(ERROR_ANALYSIS_FPATH) $(REPORT_FPATH): $(PROC_ALL_FPATH) $(EVAL_FPATH) $(QA_FPATH)
+	python3 -m fgc_wiki_qa.commands.evaluate \
+		--fgc_fpath $(PROC_ALL_FPATH) \
+		--fgc_qa_fpath $(QA_FPATH) \
+		--eval_fpath $(EVAL_FPATH) \
+		--wiki_benchmark data/external/fgc_wiki_benchmark_v0.1.tsv \
+		--result_fpath $(REPORT_FPATH) \
+		--error_analysis $(ERROR_ANALYSIS_FPATH)
 
 clean:
 	rm -rf data/processed/1.7.8

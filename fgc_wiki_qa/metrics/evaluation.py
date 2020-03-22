@@ -2,6 +2,8 @@
 #  Unauthorized copying of this file, via any medium is strictly prohibited
 #  Proprietary and confidential
 #  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
+import sys
+
 import pandas
 from ..utils.utils import load_json
 from ..utils.fgc_utils import q_doc_generator, get_docs_with_certain_qs
@@ -15,15 +17,28 @@ def get_ans_from_df(docs_df, qid):
     return docs_df[docs_df.qid == qid].iloc[0]['answer']
 
 
-def gained_qids(already, pred):
-    return set(pred) - set(already)
+def gained_qids(already_corrects, pred):
+    return set(pred) - set(already_corrects)
 
 
-def sacrificed_qids(already, pred):
-    return set(already) - set(pred)
+def sacrificed_qids(already_corrects, pred):
+    return set(already_corrects) - set(pred)
 
 
-def evaluate(already, fgc_fpath, file4eval):
+def get_new_errors(already_errors, errors):
+    return set(errors) - set(already_errors)
+
+
+def get_corrected_errors(already_errors, errors):
+    return set(already_errors) - set(errors)
+
+
+def get_stubborn_errors(already_errors, errors):
+    return set(already_errors) & set(errors)
+
+
+def evaluate(already_corrects, already_errors, fgc_fpath, file4eval, tee_logger):
+    sys.stdout = tee_logger
     docs = load_json(fgc_fpath)
     df_pred = pandas.read_csv(file4eval, sep='\t', header=0)
     predicted = df_pred[(df_pred.answer.notna()) & (df_pred.answer != 'None')]
@@ -60,23 +75,23 @@ def evaluate(already, fgc_fpath, file4eval):
     print('# corrects:', num_corrects)
     print('# errors:', num_errors)
     print('Correct\'s QIDs:', corrects)
-    sacrificed = sacrificed_qids(already, corrects)
-    gained = gained_qids(already, corrects)
+    print('Error\'s QIDs:', errors)
+    sacrificed = sacrificed_qids(already_corrects, corrects)
+    gained = gained_qids(already_corrects, corrects)
+    new_errors = get_new_errors(already_errors, errors)
+    corrected_errors = get_corrected_errors(already_errors, errors)
+    stubborn_errors = get_stubborn_errors(already_errors, errors)
     if sacrificed:
         print('[WARN] Sacrificed: ', sacrificed)
+    if new_errors:
+        print('[WARN] New Errors: ', new_errors)
+    if stubborn_errors:
+        print('[INFO] Stubborn Errors: ', stubborn_errors)
     if gained:
         print('[INFO] Gained: ', gained)
-    print('Error\'s QIDs:', errors)
+    if corrected_errors:
+        print('[INFO] Corrected Errors: ', corrected_errors)
     print('Precision (excl. TN): {} / {} = {:.1%}'.format(num_corrects, num_answered, prec))
 
 
-def main():
-    already = ['D001Q01', 'D001Q03', 'D001Q06', 'D072Q03', 'D285Q01', 'D305Q06', 'D305Q08']
-    fgc_fpath = 'FGC_release_all(cn)_filtered2.json'
-    file4eval = 'experiments/model_v0.5_on_filtered/file4eval_filtered.tsv'
-    evaluate(already, fgc_fpath, file4eval)
-
-
-if __name__ == '__main__':
-    main()
 

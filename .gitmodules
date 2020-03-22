@@ -1,0 +1,3 @@
+[submodule "fgc_wiki_qa/libs/huggingface_utils"]
+	path = fgc_wiki_qa/libs/huggingface_utils
+	url = https://github.com/ciaochiaociao/huggingface_utils.git

@@ -35,8 +35,6 @@ print(all_answers)
 already_corrects = ['D001Q01', 'D001Q03', 'D001Q06', 'D004Q06', 'D071Q12', 'D072Q04', 'D097Q04', 'D097Q05', 'D247Q09',
                     'D274Q01', 'D275Q01', 'D284Q01', 'D285Q01', 'D293Q01', 'D305Q01', 'D305Q06', 'D305Q08']
 # already_corrects = set(already_corrects) & set(qids)
-evaluate(already_corrects,
-         fgc_fpath,
-         file4eval_fpath)
+evaluate(already_corrects, already_errors, fgc_fpath, file4eval_fpath, eval_result_fpath)
 
 error_analysis(fgc_qa_fpath, fgc_wiki_benchmark_fpath, file4eval_fpath, error_analysis_fpath)
