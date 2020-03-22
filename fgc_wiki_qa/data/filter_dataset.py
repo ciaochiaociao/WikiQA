@@ -15,13 +15,13 @@ import click
 def main(fgc_fpath='FGC_release_all(cn).json', output_fpath='FGC_release_all(cn)_filtered2.json'):
     # noamodes = ['YesNo', 'Comparing-Members', 'Kinship', 'Arithmetic-Operations', 'Multi-Spans-Extraction', 'Counting']
     amodes = ['Single-Span-Extraction', 'Date-Duration']
-    noqtypes = ['申论']
+    noqtypes = ['申論']
 
     docs = load_json(fgc_fpath)
     g = q_doc_generator(docs)
     qids = []
     for q, doc in g:
-        if q['AMODE'] in amodes and q['QTYPE'] not in noqtypes:
+        if set(q['AMODE']) & set(amodes) and q['QTYPE'] not in noqtypes:
             qids.append(q['QID'])
 
     newdocs = get_docs_with_certain_qs(qids, docs)

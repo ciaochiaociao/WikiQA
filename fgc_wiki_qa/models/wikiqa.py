@@ -6,10 +6,14 @@ from typing import List, Dict, TextIO, Match
 import json
 
 from ansi.colour import fg
-from google.protobuf.pyext._message import SetAllowOversizeProtos
 from os.path import abspath, dirname
 
 from stanfordnlp.server import CoreNLPClient
+# Below line should only be called after stanfordnlp to prevent seg fault
+from google.protobuf.pyext._message import SetAllowOversizeProtos
+# # fix bug: google.protobuf.message.DecodeError: Error parsing message
+# # ref: https://github.com/stanfordnlp/stanfordnlp/issues/154
+SetAllowOversizeProtos(True)
 
 from ..utils.fgc_utils import get_doc_with_one_que
 from .predicate_inference_neural import parse_question_w_neural
@@ -21,10 +25,6 @@ from ..config import DEFAULT_CORENLP_IP, FGC_KB_PATH
 from .entity_linking import build_candidates_to_EL, entity_linking, _get_text_from_token_entity_comp
 from .predicate_inference_rules import parse_question_by_regex
 from .value2ans import remove_duplicates, longest_answer, match_with_psg, match_type
-
-# fix bug: google.protobuf.message.DecodeError: Error parsing message
-# ref: https://github.com/stanfordnlp/stanfordnlp/issues/154
-SetAllowOversizeProtos(True)
 
 UNKNOWN_MESSAGE = 'Unknown in evaluation mode (if_evaluate=True)'
 
@@ -138,7 +138,7 @@ class WikiQA:
                     print(f'(sent{sent.sentenceIndex})', end=' ')
                     print(snp_pstr(sent))
                 print('\n')
-            print('{} {} {}:'.format(q_dict['QID'], fg.brightgray(q_dict['AMODE']), fg.brightgray(q_dict['ATYPE'])), end=' ')
+            print('{} {} {}:'.format(q_dict['QID'], fg.brightgray('/'.join(q_dict['AMODE'])), fg.brightgray(q_dict['ATYPE'])), end=' ')
             if len(question_ie_data.sentence) > 1:
                 print('[WARN] question split into two sentences during IE!')
                 for sent in question_ie_data.sentence:

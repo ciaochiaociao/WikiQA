@@ -67,6 +67,7 @@ def match_type(mention, ans_type, qtext):
         'COUNTRY': ['Organization', 'Location'],
         'GPE': ['Organization', 'Location'],
         'LOC': ['Organization', 'Location'],
+        'LOCATION': ['Organization', 'Location'],
         'NATIONALITY': ['Location'],
 
         'ORGANIZATION': ['Organization'],
@@ -76,6 +77,7 @@ def match_type(mention, ans_type, qtext):
         'DATE': ['Date-Duration'],
         'TIME': ['Date-Duration'],
         'DURATION': ['Date-Duration'],
+        'DYNASTY': ['Date-Duration', 'Event', 'Location'],
 
         'MONEY': ['Num-Measure'],
         'ORDINAL': ['Num-Measure'],
