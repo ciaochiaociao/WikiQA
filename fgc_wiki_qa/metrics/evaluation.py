@@ -2,6 +2,7 @@
 #  Unauthorized copying of this file, via any medium is strictly prohibited
 #  Proprietary and confidential
 #  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
+import json
 import sys
 
 import pandas
@@ -17,27 +18,52 @@ def get_ans_from_df(docs_df, qid):
     return docs_df[docs_df.qid == qid].iloc[0]['answer']
 
 
-def gained_qids(already_corrects, pred):
-    return set(pred) - set(already_corrects)
-
-
-def sacrificed_qids(already_corrects, pred):
-    return set(already_corrects) - set(pred)
-
-
-def get_new_errors(already_errors, errors):
-    return set(errors) - set(already_errors)
-
-
-def get_corrected_errors(already_errors, errors):
-    return set(already_errors) - set(errors)
-
-
 def get_stubborn_errors(already_errors, errors):
-    return set(already_errors) & set(errors)
+    return list(set(already_errors) & set(errors))
 
 
-def evaluate(already_corrects, already_errors, fgc_fpath, file4eval, tee_logger):
+def get_robust_corrects(already_corrects, corrects):
+    return list(set(already_corrects) & set(corrects))
+
+
+def get_betrayed_corrects(already_corrects, errors):
+    return list(set(already_corrects) & set(errors))
+
+
+def get_corrected_errors(already_errors, corrects):
+    return list(set(already_errors) & set(corrects))
+
+
+def get_gained_corrects(already_corrects, corrects, already_errors):
+    return list(set(corrects) - set(already_corrects) - set(get_corrected_errors(already_errors, corrects)))
+
+
+def get_sacrificed_corrects(already_corrects, corrects, errors):
+    return list((set(already_corrects) - set(corrects)) - set(get_betrayed_corrects(already_corrects, errors)))
+
+
+def get_new_errors(already_errors, errors, already_corrects):
+    return list((set(errors) - set(already_errors)) - set(get_betrayed_corrects(already_corrects, errors)))
+
+
+def get_eliminated_errors(already_errors, errors, corrects):
+    return list((set(already_errors) - set(errors)) - set(get_corrected_errors(already_errors, corrects)))
+
+
+def get_tp_predicates(parsed, golds):
+    return list(set(parsed) & set(golds))
+
+
+def get_fn_predicates(parsed, golds):
+    return list(set(golds) - set(parsed))
+
+
+def get_fp_predicates(parsed, golds):
+    return list(set(parsed) - set(golds))
+
+
+def evaluate(already_corrects, already_errors, fgc_fpath, file4eval, fgc_pred_infer_fpath, tee_logger, qids_fpath,
+             qids_by_stage_fpath):
     sys.stdout = tee_logger
     docs = load_json(fgc_fpath)
     df_pred = pandas.read_csv(file4eval, sep='\t', header=0)
@@ -76,22 +102,45 @@ def evaluate(already_corrects, already_errors, fgc_fpath, file4eval, tee_logger)
     print('# errors:', num_errors)
     print('Correct\'s QIDs:', corrects)
     print('Error\'s QIDs:', errors)
-    sacrificed = sacrificed_qids(already_corrects, corrects)
-    gained = gained_qids(already_corrects, corrects)
-    new_errors = get_new_errors(already_errors, errors)
-    corrected_errors = get_corrected_errors(already_errors, errors)
-    stubborn_errors = get_stubborn_errors(already_errors, errors)
-    if sacrificed:
-        print('[WARN] Sacrificed: ', sacrificed)
-    if new_errors:
-        print('[WARN] New Errors: ', new_errors)
-    if stubborn_errors:
-        print('[INFO] Stubborn Errors: ', stubborn_errors)
-    if gained:
-        print('[INFO] Gained: ', gained)
-    if corrected_errors:
-        print('[INFO] Corrected Errors: ', corrected_errors)
+
+    qids_by_stage_dict = {
+        'fn_predicates': get_fn_predicates(parsed, questions_has_gold_predicate.qid.to_list()),
+        'fp_predicates': get_fp_predicates(parsed, questions_has_gold_predicate.qid.to_list()),
+        'tp_predicates': get_tp_predicates(parsed, questions_has_gold_predicate.qid.to_list()),
+    }
+
+    qids_dict = {
+        'sacrificed_corrects' : get_sacrificed_corrects(already_corrects, corrects, errors),
+        'gained_correts' : get_gained_corrects(already_corrects, corrects, already_errors),
+        'new_errors' : get_new_errors(already_errors, errors, already_corrects),
+        'eliminated_errors' : get_eliminated_errors(already_errors, errors, corrects),
+        'stubborn_errors' : get_stubborn_errors(already_errors, errors),
+        'robust_corrects' : get_robust_corrects(already_corrects, corrects),
+        'betrayed_corrects' : get_betrayed_corrects(already_corrects, errors),
+        'corrected_errors' : get_corrected_errors(already_errors, corrects),
+    }
+
+    if qids_dict['robust_corrects']:
+        print('[INFO] Robust Corrects (C>C): ', qids_dict['robust_corrects'])
+    if qids_dict['stubborn_errors']:
+        print('[INFO] Stubborn Errors (E>E): ', qids_dict['stubborn_errors'])
+    if qids_dict['betrayed_corrects']:
+        print('[BAD] Betrayed Corrects (C>E): ', qids_dict['betrayed_corrects'])
+    if qids_dict['sacrificed_corrects']:
+        print('[BAD] Sacrificed (C>_): ', qids_dict['sacrificed_corrects'])
+    if qids_dict['new_errors']:
+        print('[BAD] New Errors (_>E): ', qids_dict['new_errors'])
+    if qids_dict['corrected_errors']:
+        print('[GOOD] Corrected Errors (E>C): ', qids_dict['corrected_errors'])
+    if qids_dict['eliminated_errors']:
+        print('[GOOD] Eliminated Errors (E>_): ', qids_dict['eliminated_errors'])
+    if qids_dict['gained_correts']:
+        print('[GOOD] Gained (_>C): ', qids_dict['gained_correts'])
     print('Precision (excl. TN): {} / {} = {:.1%}'.format(num_corrects, num_answered, prec))
 
+    with open(qids_fpath, 'w', encoding='utf-8') as f:
+        json.dump(qids_dict, f, ensure_ascii=False, indent=4)
 
+    with open(qids_by_stage_fpath, 'w', encoding='utf-8') as f:
+        json.dump(qids_by_stage_dict, f, ensure_ascii=False, indent=4)
 

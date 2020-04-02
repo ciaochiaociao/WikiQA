@@ -92,20 +92,25 @@ $(EVAL_FPATH): $(PROC_ALL_FPATH)
 		--eval_fpath $@ | tee $(RUN_LOG)
 
 
-ERROR_ANALYSIS_FPATH ?= $(EXP_DIR)/error_analysis_all.xlsx
-REPORT_FPATH ?= $(EXP_DIR)/report_all.txt
+# inputs
 QA_FPATH ?= $(PROC_DATASET_DIR)/qa_all.tsv
 
-run_eval: $(ERROR_ANALYSIS_FPATH) $(REPORT_FPATH)
+# outputs
+ERROR_ANALYSIS_FPATH ?= $(EXP_DIR)/error_analysis_all.xlsx
+REPORT_FPATH ?= $(EXP_DIR)/report_all.txt
+QIDS_FPATH ?= $(EXP_DIR)/qids_all.json
 
-$(ERROR_ANALYSIS_FPATH) $(REPORT_FPATH): $(PROC_ALL_FPATH) $(EVAL_FPATH) $(QA_FPATH)
+run_eval: $(ERROR_ANALYSIS_FPATH) $(REPORT_FPATH) $(QIDS_FPATH)
+
+$(ERROR_ANALYSIS_FPATH) $(REPORT_FPATH) $(QIDS_FPATH): $(PROC_ALL_FPATH) $(EVAL_FPATH) $(QA_FPATH)
 	python3 -m fgc_wiki_qa.commands.evaluate \
 		--fgc_fpath $(PROC_ALL_FPATH) \
 		--fgc_qa_fpath $(QA_FPATH) \
 		--eval_fpath $(EVAL_FPATH) \
 		--wiki_benchmark data/external/fgc_wiki_benchmark_v0.1.tsv \
 		--result_fpath $(REPORT_FPATH) \
-		--error_analysis $(ERROR_ANALYSIS_FPATH)
+		--error_analysis $(ERROR_ANALYSIS_FPATH) \
+		--qids_fpath $(QIDS_FPATH)
 
 clean:
 	rm -rf data/processed/1.7.8

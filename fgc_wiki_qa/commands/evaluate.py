@@ -37,5 +37,6 @@ already_errors = \
     # ['D001Q09', 'D071Q01', 'D071Q13', 'D077Q10', 'D254Q01', 'D247Q09', 'D275Q03', 'D302Q01']
 
 # already_corrects = set(already_corrects) & set(qids)
-evaluate(already_corrects, already_errors, args.fgc_fpath, args.eval_fpath, TeeLogger(args.result_fpath))
+evaluate(already_corrects, already_errors, args.fgc_fpath, args.eval_fpath, args.fgc_pred_infer_fpath,
+         TeeLogger(args.result_fpath), args.qids_fpath, args.qids_by_stage_fpath)
 error_analysis(args.fgc_qa_fpath, args.wiki_benchmark, args.eval_fpath, args.error_analysis)
