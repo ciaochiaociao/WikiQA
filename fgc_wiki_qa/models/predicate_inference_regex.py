@@ -83,10 +83,10 @@ strict_label_map = {
     '死亡年份': [f'^{name}(是|{_in})?{which_all}{year}.*{death_all}', f'^{name}(的)?{death_all}.*{which_all}{year}'],
     '死亡日期': [f'^{name}(的)?死亡地',
              f'^{name}(是|{_in})?{when}.*{death_all}', f'^{name}(的)?{death_all}.*{when}'],
-    '成立或建立時間': [f'^{name}(的)?{start}.*{time}',
+    '成立或建立时间': [f'^{name}(的)?{start}.*{time}',
                 f'^{name}(是|{_in})?{when}.*{start}', f'^{name}{start}.*{when}'],
     # rule 2-1-c: 人物资讯
-    '國籍': [f'^{name}的国籍', f'^{name}{is_}{what_which}国籍',
+    '国籍': [f'^{name}的国籍', f'^{name}({is_})?{what_which}国籍',
            f'^{name}(的)?{birth_all}.*{what_which}({country}|国籍)', f'^{name}({is_})?{what_which}({country}|国籍){birth_all}',
            f'^{name}{is_}{what_which}({country}|国籍)(的)?人', f'^{name}({is_})?{what_which}{country}来'],
     '朝代': [f'^{name}(的)?{birth_all}.*{what_which}朝代', f'^{name}({is_})?{what_which}朝代{birth_all}',

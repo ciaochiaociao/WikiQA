@@ -3,6 +3,7 @@
 #  Proprietary and confidential
 #  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
 import os
+from os import path
 
 from opencc import OpenCC
 from dotenv import load_dotenv, find_dotenv

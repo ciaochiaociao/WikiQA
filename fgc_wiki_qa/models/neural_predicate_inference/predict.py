@@ -8,7 +8,7 @@ from typing import List
 
 import pandas as pd
 import tensorflow as tf
-from transformers import BertTokenizer, TFBertForSequenceClassification
+from transformers import BertTokenizer
 
 from ...config import DATASAT_FPATH, TOKENIZER_FPATH, MODEL_FPATH
 #

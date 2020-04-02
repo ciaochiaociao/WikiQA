@@ -18,7 +18,7 @@ argparser.add_argument('--fgc_fpath', default='data/processed/1.7.8/FGC_release_
 argparser.add_argument('--fgc_qa_fpath', default='data/processed/1.7.8/qa_train.tsv')
 argparser.add_argument('--eval_fpath', default='experiments/new/file4eval.tsv')
 argparser.add_argument('--wiki_benchmark', default=FGC_WIKI_BENCHMARK_FPATH)
-
+argparser.add_argument('--fgc_pred_infer_fpath', defalt='data/external/fgc_predicate_inference_v0.1.tsv')
 # outputs
 argparser.add_argument('--result_fpath', default='experiments/new/result.txt')
 argparser.add_argument('--error_analysis', default='experiments/new/error_analysis.xlsx')

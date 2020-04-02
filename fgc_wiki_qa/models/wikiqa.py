@@ -81,9 +81,9 @@ def get_topn_atype_dicts(from_atype, atype_topn):
 
 
 class WikiQA:
-    def __init__(self, server=DEFAULT_CORENLP_IP):
+    def __init__(self, server=DEFAULT_CORENLP_IP, if_evaluate=False):
         self.corenlp_ip = server  # 'http://localhost:9000'
-        self.if_evaluate = True  # evaluate the performance
+        self.if_evaluate = if_evaluate  # evaluate the performance
 
         # FGC KB
         with open(FGC_KB_PATH, 'r', encoding='utf-8') as f:

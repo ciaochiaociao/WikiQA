@@ -2,6 +2,7 @@
 #  Unauthorized copying of this file, via any medium is strictly prohibited
 #  Proprietary and confidential
 #  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
+from typing import Union, List
 
 from ..utils.fuzzy_match import build_fuzzy_match_pattern, fuzzy_match
 
@@ -39,7 +40,7 @@ def match_with_psg(ans_cand, dtext, fuzzy):
     return matches
 
 
-def match_type(mention, ans_type, qtext):
+def match_type(mention, ans_types: List[str], qtext):
     anstype: ["Person", 'Date-Duration', 'Location', 'Organization', 'Num-Measure', 'YesNo', 'Kinship', 'Event',
               'Object', 'Misc']
     ansmode: ['Single-Span-Extraction', 'Multi-Spans-Extraction', 'YesNo', 'Arithmetic-Operations', 'Counting',
@@ -85,15 +86,17 @@ def match_type(mention, ans_type, qtext):
         'PERCENT': ['Num-Measure']
     }
 
-    def _other_rules(qtext, ans_type, ent_ans_map):
-        return '朝代' in qtext and ans_type in ent_ans_map['COUNTRY'] + ent_ans_map['TIME']
+    def _other_rules(qtext, ans_types, ent_ans_map):
+        return '朝代' in qtext and set(ans_types) & set(ent_ans_map['COUNTRY'] + ent_ans_map['TIME'])
 
     def _bracketed_mention_match_ans_type():
         # mentions_bracketed
         # TODO
         pass
 
-    if ans_type in ent_ans_map[mention.entityType] or _bracketed_mention_match_ans_type() or _other_rules(qtext, ans_type, ent_ans_map):
+    if set(ans_types) & set(ent_ans_map[mention.entityType]) or \
+            _bracketed_mention_match_ans_type() or \
+            _other_rules(qtext, ans_types, ent_ans_map):
         # logging.warning(
         #     f'matching the type: ans_type - {ans_type}, snp_mention - {snp_mention.entityMentionText}({snp_mention.entityType})')
         return True

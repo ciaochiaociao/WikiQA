@@ -44,7 +44,7 @@ def filter_out_items_wo_inst_attr(all_wd_items):
 
     items = []
     for item in all_wd_items:
-        inst = traverse_by_attr_name(item, '性質')
+        inst = traverse_by_attr_name(item, '性质')
         if inst is not None and len(inst) != 0:
             items.append(item)
     return items
@@ -86,7 +86,7 @@ def filter_out_unmatched_subj_wditem_type(all_wd_items, attr):
         subj_type_id = subj_type_to_wd_id[attr_to_subj_type[attr]]
         filtered_items = []
         for item in all_wd_items:
-            wd_instance_id = traverse_by_attr_name(item, '性質')[0]['value']
+            wd_instance_id = traverse_by_attr_name(item, '性质')[0]['value']
             if wd_instance_id == subj_type_id:
                 filtered_items.append(item)
         return filtered_items

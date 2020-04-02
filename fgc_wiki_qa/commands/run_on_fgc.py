@@ -10,7 +10,7 @@ from ..config import DEFAULT_CORENLP_IP
 from ..models.wikiqa import WikiQA
 
 argparser = ArgumentParser()
-argparser.add_argument('--fgc_fpath', default='data/processed/1.7.8/FGC_release_all_train_filtered.json')
+argparser.add_argument('--fgc_fpath')
 argparser.add_argument('--corenlp_ip', default=DEFAULT_CORENLP_IP)
 argparser.add_argument('--use_fgc_kb', action='store_true')
 argparser.add_argument('--pred_infer', default='rule', choices=['rule', 'neural'])
@@ -22,7 +22,7 @@ pred_old: Use Predicted Supporting Evidence in Dataset provided by Meng-Tse (dat
 argparser.add_argument('--qid_list', nargs='+', default=[])
 
 
-argparser.add_argument('--eval_fpath', default='experiments/new/file4eval.tsv')
+argparser.add_argument('--eval_fpath', default='reports/file4eval.tsv')
 
 args = argparser.parse_args()
 if args.pred_infer == 'rule':
@@ -35,8 +35,10 @@ else:
 with open(args.fgc_fpath, encoding='utf-8') as f:
     docs = json.load(f)
 
-wiki_qa = WikiQA(server=(args.corenlp_ip))
-# docs = get_docs_with_certain_qs(['D002Q01'], docs)
+wiki_qa = WikiQA(server=args.corenlp_ip, if_evaluate=True)
+
+if args.qid_list:
+    docs = get_docs_with_certain_qs(args.qid_list, docs)
 
 wiki_qa.predict_on_docs(docs, args.eval_fpath,
                         neural_pred_infer=neural_pred_infer, use_fgc_kb=args.use_fgc_kb, use_se=args.use_se)
