@@ -1,18 +1,19 @@
-.PHONY: all downlad filter process get_qa clean merge
+.PHONY: all downlad filter get_qa merge extract get_toy_dataset
 
-all: install download filter get_qa merge
+all: merge filter get_qa get_toy_dataset
+get: download extract
 
-install:
-	git clone
 
-# default inputs
-FGC_VER?=1.7.8
-TRAIN_FNAME?=FGC_release_all_train.json
-DEV_FNAME?=FGC_release_all_dev.json
-TEST_FNAME?=FGC_release_all_test.json
-ALL_FNAME?=merged.json
-RAW_DATASET_DIR?=data/raw/$(FGC_VER)
-PROC_DATASET_DIR?=data/processed/$(FGC_VER)
+#inputs: FGC_VER
+
+RAW_DATASET_DIR = data/raw/$(FGC_VER)
+PROC_DATASET_DIR = data/processed/$(FGC_VER)
+
+# default contants
+TRAIN_FNAME = FGC_release_all_train.json
+DEV_FNAME = FGC_release_all_dev.json
+TEST_FNAME = FGC_release_all_test.json
+ALL_FNAME = merged.json
 
 # variables
 RAW_TRAIN_FPATH = $(RAW_DATASET_DIR)/$(TRAIN_FNAME)
@@ -25,32 +26,61 @@ PROC_TEST_FPATH = $(PROC_DATASET_DIR)/$(TEST_FNAME:.json=_filtered.json)
 PROC_ALL_FPATH = $(PROC_DATASET_DIR)/$(ALL_FNAME:.json=_filtered.json)
 
 
-# download and extract dataset
-download: $(RAW_TRAIN_FPATH) $(RAW_DEV_FPATH) $(RAW_TEST_FPATH)
-FGC_DATASET_7z_URL?='https://drive.google.com/uc?id=1ofd5U0q7-eUJrs6c4n0AZz2PLgc0KY7q&export=download'
-$(RAW_TRAIN_FPATH) $(RAW_DEV_FPATH) $(RAW_TEST_FPATH) :
+# download
+# BUGFIX: below does not work
+ifeq ($(FGC_VER), 1.7.8)
+	FGC_DATASET_7z_URL ?= 'https://drive.google.com/uc?id=1ofd5U0q7-eUJrs6c4n0AZz2PLgc0KY7q&export=download'
+endif
+ifeq ($(FGC_VER), 1.7.9)
+	FGC_DATASET_7z_URL ?= 'https://drive.google.com/u/0/uc?id=1K0QVORNDgEI6tF8e-SXa--UdjkzAZa2d&export=download'
+endif
+
+DOWNLOAD_FPATH = data/download/$(FGC_VER).7z
+
+download: $(DOWNLOAD_FPATH)
+
+$(DOWNLOAD_FPATH):
+	echo 'downloading dataset ...'
+	chmod u+w $(dir $(DOWNLOAD_FPATH)) && \
+	wget -O $(DOWNLOAD_FPATH) $(FGC_DATASET_7z_URL) && \
+	chmod 444 $(DOWNLOAD_FPATH);
+	chmod u-w $(dir $(DOWNLOAD_FPATH));
+
+# extract
+extract: $(RAW_DATASET_DIR)
+
+$(RAW_DATASET_DIR) : $(DOWNLOAD_FPATH)
 	{ \
-	wget -O data/raw/data.7z $(FGC_DATASET_7z_URL) && \
-	7z x -o$(RAW_DATASET_DIR)/ data/raw/data.7z && \
-	rm data/raw/data.7z; \
+	chmod u+w $(dir $(RAW_DATASET_DIR)) && \
+	7z x -o$(RAW_DATASET_DIR)/ $(DOWNLOAD_FPATH) && \
+	chmod 444 $(RAW_DATASET_DIR)/*.json && \
+	chmod 555 $(RAW_DATASET_DIR); \
+	chmod u-w $(dir $(RAW_DATASET_DIR)); \
 	}
 
 # merge
 merge: $(RAW_ALL_FPATH)
-$(RAW_ALL_FPATH) : $(RAW_TRAIN_FPATH) $(RAW_DEV_FPATH) $(RAW_TEST_FPATH)
-	python3 -m fgc_wiki_qa.data.merge $^ $@
+$(RAW_ALL_FPATH) :
+	chmod u+w $(@D) && \
+	python3 -m fgc_wiki_qa.data.merge $(RAW_TRAIN_FPATH) $(RAW_DEV_FPATH) $(RAW_TEST_FPATH) $@ &&\
+	chmod 444 $@;
+	chmod u-w $(@D)
 
 # filter
 filter: $(PROC_TRAIN_FPATH) $(PROC_DEV_FPATH) $(PROC_TEST_FPATH) $(PROC_ALL_FPATH)
 
-$(PROC_TRAIN_FPATH) : $(RAW_TRAIN_FPATH)
-	python3 -m fgc_wiki_qa.data.filter_dataset $< $@
-$(PROC_DEV_FPATH) : $(RAW_DEV_FPATH)
-	python3 -m fgc_wiki_qa.data.filter_dataset $< $@
-$(PROC_TEST_FPATH) : $(RAW_TEST_FPATH)
-	python3 -m fgc_wiki_qa.data.filter_dataset $< $@
-$(PROC_ALL_FPATH) : $(RAW_ALL_FPATH)
-	python3 -m fgc_wiki_qa.data.filter_dataset $< $@
+$(PROC_TRAIN_FPATH) :
+	mkdir -p $(@D)
+	python3 -m fgc_wiki_qa.data.filter_dataset $(RAW_TRAIN_FPATH) $@
+$(PROC_DEV_FPATH) :
+	mkdir -p $(@D)
+	python3 -m fgc_wiki_qa.data.filter_dataset $(RAW_DEV_FPATH) $@
+$(PROC_TEST_FPATH) :
+	mkdir -p $(@D)
+	python3 -m fgc_wiki_qa.data.filter_dataset $(RAW_TEST_FPATH) $@
+$(PROC_ALL_FPATH) :
+	mkdir -p $(@D)
+	python3 -m fgc_wiki_qa.data.filter_dataset $(RAW_ALL_FPATH) $@
 
 # get_qa
 get_qa: $(PROC_DATASET_DIR)/qa_train.tsv $(PROC_DATASET_DIR)/qa_dev.tsv $(PROC_DATASET_DIR)/qa_test.tsv $(PROC_DATASET_DIR)/qa_all.tsv

@@ -13,8 +13,8 @@ from pprint import pprint
 import json
 import pandas as pd
 
-with open('data/raw/FGC_release_all(cn).json', encoding='utf-8') as f:
-	data = json.load(f)
+with open('FGC_release_all(cn).json', encoding='utf-8') as f:
+	docs = json.load(f)
 
 df = pd.DataFrame(data)
 
