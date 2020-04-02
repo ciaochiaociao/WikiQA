@@ -7,7 +7,7 @@
 
 birth = '(出生|诞生)'
 birth_all = f'(生|{birth})'
-death = f'(死亡|死掉|过世|逝世|去世|离世|离开人间)'
+death = f'(死亡|死掉|过世|过逝|逝世|去世|离世|离开人间)'
 death_sim = f'死'
 death_all = f'({death}|{death_sim})'
 _in = '(在|于)'
@@ -52,14 +52,19 @@ start = '(开工|建立|成立|签署|生效|开始|始于)'
 # rule 2-1-5: wh-word for time/date (what time, when)
 
 when = f'({what_which}({time}|{year}|{month}|{date})|{what_which}({time_sim}|{year}|{month_sim}|{date_sim}))'
-human = '(人|人物)'
+human = '(人|人物|名字)'
 who = f'((({what_which}|{what_sim}).{0, 5}{human})|谁)'
 found = f'(创立|创办|开始|创建|发起|创业|建立)'
 
 name = '(?P<name>[^的]{2,10}?)'
-is_ = '(叫|是)'
-height = '((总)高度|身高)'
+is_ = '(叫|是|为)'
+height = '((总)?高度|身高)'
 have = '(有|拥有)'
+meter = '(尺|呎)'
+height_unit = f'(((公|英)?{meter})|米|m)'
+how_many = '(几|多少|多)'
+how = '多(么|嬤|麽|嚜)?'
+high = '高'
 
 custom = {
     '出生年份': '出生日期',
@@ -88,16 +93,19 @@ strict_label_map = {
     # rule 2-1-c: 人物资讯
     '国籍': [f'^{name}的国籍', f'^{name}({is_})?{what_which}国籍',
            f'^{name}(的)?{birth_all}.*{what_which}({country}|国籍)', f'^{name}({is_})?{what_which}({country}|国籍){birth_all}',
-           f'^{name}{is_}{what_which}({country}|国籍)(的)?人', f'^{name}({is_})?{what_which}{country}来'],
+           f'^{name}({is_})?{what_which}({country}|国籍)(的)?人', f'^{name}({is_})?{what_which}{country}来'],
     '朝代': [f'^{name}(的)?{birth_all}.*{what_which}朝代', f'^{name}({is_})?{what_which}朝代{birth_all}',
-           f'^{name}{is_}{what_which}朝代'],
-    '职业': ['职(位|业|务)', '工作', '职称', '岗位'],
-    '創辦者': [f'{found}(人|者)', f'{who}.*{found}', f'{start}.*{found}'],
-    '高度': [f'^{name}(的)?{height}'],
-    '配偶': [f'^{name}(的)?(妻子|老婆|配偶){is_}{what}名字'],
-    '父親': [f'^{name}(的)?(爸爸|父亲|老爸){is_}{what}名字'],
-    '母親': [f'^{name}(的)?(妈妈|母亲|老母){is_}{what}名字'],
-    '子女数目': [f'^{name}总共{have}几个(小孩|孩子)']
+           f'^{name}({is_})?{what_which}朝代'],
+    '职业': [f'^{name}(的)?(职(位|业|务)|工作)', f'^{name}.*{what}工作'],
+    '担任职务': [f'^{name}(的)?(职称|岗位)'],
+    '创办者': [f'{name}(的)?{found}(人|者)', f'{who}.*{found}(了)?{name}', f'{start}.*{found}(了)?{name}'],
+    '高度': [f'^{name}(的)?{height}', f'^{name}({is_})?{how_many}{height_unit}', f'^{name}({is_})?{how}{high}'],
+    '配偶': [f'^{name}(的)?(妻子|老婆|配偶)({is_})?{who}'],
+    '父亲': [f'^{name}(的)?(爸爸|父亲|老爸)({is_})?{who}'],
+    '母亲': [f'^{name}(的)?(妈妈|母亲|老母)({is_})?{who}'],
+    '子女数目': [f'^{name}((总共)|共)?{have}{how_many}个(小孩|孩子)'],
+
+    '寿命': [f'^{name}(享年|得年|{death_all}).*{how_many}岁', f'^{name}{how_many}岁.*(享年|得年|{death_all})']
 
 }
 
