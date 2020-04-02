@@ -1,26 +1,28 @@
 # WikiQA
 ## Requirements
 stanfordnlp
-
-## installation
-python3 -m pip install stanfordnlp
+python-dotenv
+ansi
 
 ## Usage
-You can run `python3 wikiqa.py` directly or use run the jupyter notebook, `demo.ipynb`
 
 ```python
 from pprint import pprint
 import json
-import pandas as pd
+from fgc_wiki_qa.models.wikiqa import WikiQA
 
 with open('FGC_release_all(cn).json', encoding='utf-8') as f:
 	docs = json.load(f)
 
-df = pd.DataFrame(data)
+CORENLP_IP = 'http://localhost:9000'
 
-wiki_qa = WikiQA()
-all_answers = wiki_qa.predict_on_qs_of_one_doc(data)  # use data[0:2] to just answer the first two passages for the pilot run
-pprint(all_answers)
+wiki_qa = WikiQA(CORENLP_IP)
+for doc in docs:
+    all_answers = wiki_qa.predict_on_qs_of_one_doc(doc)
+    #same as below
+    #all_answers = wiki_qa.predict_on_qs_of_one_doc(doc, use_fgc_kb=True, use_se='pred', neural_pred_infer=False)
+    
+    pprint(all_answers)
 ```
 ```
 #example input
@@ -70,3 +72,8 @@ pprint(all_answers)
 0.3 - Refactor WikiQA - 1 
 0.4 - Refactor WikiQA - 2
 0.5 - Refactor WikiQA - 3
+1.0 - Add Supporting Evidence and Neural Predicate Inference, ...
+1.0.2 - Modify Supporting Evidence, ATYPE, AMODE attribute names in json during prediction
+1.0.3 
+    - Modify Supporting Evidence, ATYPE, AMODE attribute names in json during prediction Again
+    - Add cached wikidata_utils function 

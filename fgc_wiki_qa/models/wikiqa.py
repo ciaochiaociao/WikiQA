@@ -151,7 +151,9 @@ class WikiQA:
                         # 'QID': q_dict['QID'],
                         'AMODULE': 'Wiki-Json-Inference',
                         'ATEXT': matched,
-                        'score': 1.0
+                        'SCORE': 1.0,
+                        'SCORE_S': 0.0,
+                        'SCORE_E': 0.0,
                     }]
                     all_answers.append(q_anses)
                     continue
@@ -221,16 +223,16 @@ class WikiQA:
             # ===== FINISHING STEP =====
             # transfer to FGC output api format
 
-            if final_answers:
+            if final_answer:
                 q_anses = [{
-                    'QID': q_dict['QID'],  # for debugging
-                    'QTEXT': qtext,  # for debugging
-                    'AMODULE': 'Wiki-Kb-Inference',
-                    'ATEXT': final_answers,
-                    'score': 1.0,
-                    'start_score': 0,
-                    'end_score': 0,
-                    'gold': answers  # for debugging
+                    # 'QID': q_dict['QID'],  # for debugging
+                    # 'QTEXT': qtext,  # for debugging
+                    'AMODULE': 'WikiQA',
+                    'ATEXT': final_answer,
+                    'SCORE': 1.0,
+                    'SCORE_S': 0.0,
+                    'SCORE_E': 0.0,
+                    # 'gold': answers  # for debugging
                 }]
             else:
                 q_anses = [{

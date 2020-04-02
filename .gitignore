@@ -6,3 +6,7 @@ models/*
 reports/*
 data/*
 experiments/*
+released
+.env
+/fgc_wiki_qa/files/
+-checkpoint.ipynb

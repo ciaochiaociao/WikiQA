@@ -109,6 +109,7 @@ PRED_INFER?=rule
 
 EVAL_FPATH=$(EXP_DIR)/file4eval_all.tsv
 
+# examples: make run_exp EXP_DIR=experiments/v1.02_on_1.7.8_revise_sp PRED_INFER=rule FGC_VER=1.7.8-revise-sp USE_SE=pred
 run_exp:
 	mkdir -p $(EXP_DIR)
 	$(MAKE) run
