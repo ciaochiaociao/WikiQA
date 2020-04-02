@@ -80,13 +80,16 @@ run_exp:
 	$(MAKE) run
 	$(MAKE) run_eval
 
+RUN_LOG = $(EXP_DIR)/run.log
+
 run: $(EVAL_FPATH)
 
-$(EVAL_FPATH) : $(PROC_ALL_FPATH)
+$(EVAL_FPATH): $(PROC_ALL_FPATH)
 	python3 -m fgc_wiki_qa.commands.run_on_fgc \
 		--fgc_fpath $< \
 		--pred_infer $(PRED_INFER) \
-		--eval_fpath $@
+		--use_se $(USE_SE) \
+		--eval_fpath $@ | tee $(RUN_LOG)
 
 
 ERROR_ANALYSIS_FPATH ?= $(EXP_DIR)/error_analysis_all.xlsx
