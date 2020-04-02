@@ -214,17 +214,15 @@ def snp_print_legends():
     print(get_multicolor_strs(color_table.keys(), color_table.keys(), color_table, all_classes=color_table.keys()))
 
 
-def snp_pstr(snp_sent: Sentence, mode: Union['color', 'bracket', 'custom'] = 'color'):
+def snp_pstr(snp_sent: Sentence, mode: Union['color', 'bracket', 'custom'] = 'color', **kwargs):
     tokens = snp_sent.token
     token_texts = [token.originalText for token in tokens]
     token_ners = [token.fineGrainedNER for token in tokens]
 
     if mode == 'color':
-        return get_multicolor_strs(token_texts, token_ners, color_table, all_classes=color_table.keys())
+        return get_multicolor_strs(token_texts, token_ners, color_table, all_classes=color_table.keys(), **kwargs)
     elif mode == 'custom':
-        return get_multicolor_strs(token_texts, token_ners, all_classes=color_table.keys())
+        return get_multicolor_strs(token_texts, token_ners, all_classes=color_table.keys(), **kwargs)
     elif mode == 'bracket':
         pass  #TODO
-
-
 
