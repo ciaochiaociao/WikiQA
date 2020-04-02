@@ -4,6 +4,7 @@
 #  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
 
 from collections import Counter
+from typing import List
 
 import pandas as pd
 import tensorflow as tf
@@ -11,8 +12,9 @@ from transformers import BertTokenizer, TFBertForSequenceClassification
 
 from ...config import DATASAT_FPATH, TOKENIZER_FPATH, MODEL_FPATH
 #
-# import sys, os
-# sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import sys, os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 
 # memory growth
 # gpus = tf.config.experimental.list_physical_devices('GPU')
