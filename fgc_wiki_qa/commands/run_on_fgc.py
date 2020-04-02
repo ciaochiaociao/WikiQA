@@ -8,6 +8,7 @@ from argparse import *
 
 from ..config import DEFAULT_CORENLP_IP
 from ..models.wikiqa import WikiQA
+from ..utils.fgc_utils import get_docs_with_certain_qs
 
 argparser = ArgumentParser()
 argparser.add_argument('--fgc_fpath')
