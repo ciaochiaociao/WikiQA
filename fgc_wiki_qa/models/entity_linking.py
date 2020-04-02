@@ -9,8 +9,8 @@ from stanfordnlp.protobuf import NERMention, Token
 
 from .predicate_inference_regex import subj_type_to_wd_id, attr_to_subj_type, subj_type_to_ent_types
 from ..utils.stanfordnlp_utils import snp_get_ents_by_overlapping_char_span_in_doc
-from ..utils.wikidata4fgc_v2 import get_dicts_from_keyword, clean_and_simplify_wd_items
-from ..utils.wikidata_utils import traverse_by_attr_name
+from ..utils.wikidata_utils import get_dicts_from_keyword, clean_and_simplify_wd_items
+from ..utils.wikidata4fgc import traverse_by_attr_name
 
 
 def build_candidates_to_EL(name, question_ie_data, span, attr, use_ner=True, split_dot=True):

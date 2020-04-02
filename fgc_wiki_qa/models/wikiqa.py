@@ -19,8 +19,8 @@ SetAllowOversizeProtos(True)
 from ..utils.fgc_utils import get_doc_with_one_que
 from .predicate_inference_neural import parse_question_w_neural
 from ..utils.stanfordnlp_utils import snp_pstr, snp_get_ents_by_overlapping_char_span_in_doc
-from ..utils.wikidata4fgc_v2 import get_fallback_zh_label_from_dict
-from ..utils.wikidata_utils import traverse_by_attr_name, postprocess_datavalue
+from ..utils.wikidata_utils import get_fallback_zh_label_from_dict
+from ..utils.wikidata4fgc import traverse_by_attr_name, postprocess_datavalue
 from ..config import DEFAULT_CORENLP_IP, FGC_KB_PATH
 
 from .entity_linking import build_candidates_to_EL, entity_linking, _get_text_from_token_entity_comp
@@ -155,10 +155,29 @@ class WikiQA:
                     all_answers.append(q_anses)
                     continue
 
-            # filter out unwanted mode
-            if q_dict['AMODE'] in ['Yes-No', 'Comparing-Members', 'Kinship', 'Arithmetic-Operations',  'Multi-Spans-Extraction', 'Counting']:
+            from_amode: Union[List[str], dict] = q_dict['AMODE']
+            from_atype: Union[str, dict] = q_dict['ATYPE']
+            if isinstance(from_amode, dict):
+                def _filter_simplify_dict(dict_with_score: dict):
+                    return {k: v['score'] for k, v in dict_with_score.items()}
+
+                amode_dict = get_topn_amode_dicts(from_amode, amode_topn)
+                amode_dict = _filter_simplify_dict(amode_dict)
+            elif isinstance(from_amode, list):
+                amode_dict = from_amode
+            else:
+                raise TypeError
+            if isinstance(from_atype, dict):
+                atype_dict = get_topn_atype_dicts(from_atype, atype_topn)
+            elif isinstance(from_atype, str):
+                atype_dict = from_atype
+            else:
+                raise TypeError
+            # rule: filter out unwanted mode
+            if set(amode_dict) & set(['Yes-No', 'Comparing-Members', 'Kinship', 'Arithmetic-Operations',  'Multi-Spans-Extraction', 'Counting']):
                 continue
-            # if q_dict['ATYPE'] in ['Object']:
+            # rule: filter out unwanted type
+            # if atype in ['Object']:
             #     continue
 
             # for evaluation
@@ -186,7 +205,7 @@ class WikiQA:
                     print(f'(sent{sent.sentenceIndex})', end=' ')
                     print(snp_pstr(sent))
                 print('\n')
-            print('{} {} {}:'.format(q_dict['QID'], fg.brightgray('/'.join(q_dict['AMODE'])), fg.brightgray(q_dict['ATYPE'])), end=' ')
+            print('{} {} {}:'.format(q_dict['QID'], fg.brightgray('/'.join(amode_dict)), fg.brightgray('/'.join(atype_dict))), end=' ')
             if len(question_ie_data.sentence) > 1:
                 print('[WARN] question split into two sentences during IE!')
                 for sent in question_ie_data.sentence:
@@ -212,14 +231,17 @@ class WikiQA:
                     'end_score': 0,
                     'gold': answers  # for debugging
                 }]
-                all_answers.append(q_anses)
+            else:
+                q_anses = [{
+                    'AMODULE': 'WikiQA',
+                    'ATEXT': '',
+                    'SCORE': 0.0,
+                    'SCORE_S': 0.0,
+                    'SCORE_E': 0.0
+                }]
 
-        # endregion questions for-loop
+            all_answers.append(q_anses)
 
-        # df = pd.DataFrame(prediction_results)
-        # if if_save_result:
-        #     print('saving results ...')
-        #     df.to_csv('result.csv')
         return all_answers
 
     def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval, psg_sents, atype_dict: dict,
@@ -306,7 +328,7 @@ class WikiQA:
         print('(NE)', [mention.entityMentionText for mention in mentions])
 
         # rule: match ans type and mention type
-        mentions = [mention for mention in mentions if match_type(mention, q_dict['ATYPE'], qtext)]
+        mentions = [mention for mention in mentions if match_type(mention, atype_dict.keys(), qtext)]
         print('(NE-ANS Type Match)', [mention.entityMentionText for mention in mentions])
 
         # rule: Use matched NE (expansion/diminishing) from psg as answers

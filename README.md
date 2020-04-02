@@ -63,7 +63,7 @@ pprint(all_answers)
    'start_score': 0}]]
 ```
 
-## Release Note
+## Release Notes
 
 0.1 - Original Release
 0.2 - Add fgc_knowledgebase.json, fgc_kb mode

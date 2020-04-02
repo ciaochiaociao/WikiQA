@@ -15,14 +15,14 @@ RAW_DATASET_DIR?=data/raw/$(FGC_VER)
 PROC_DATASET_DIR?=data/processed/$(FGC_VER)
 
 # variables
-RAW_TRAIN_FPATH?=$(RAW_DATASET_DIR)/$(TRAIN_FNAME)
-RAW_DEV_FPATH?=$(RAW_DATASET_DIR)/$(DEV_FNAME)
-RAW_TEST_FPATH?=$(RAW_DATASET_DIR)/$(TEST_FNAME)
-RAW_ALL_FPATH=$(RAW_DATASET_DIR)/$(ALL_FNAME)
-PROC_TRAIN_FPATH?=$(PROC_DATASET_DIR)/$(TRAIN_FNAME:.json=_filtered.json)
-PROC_DEV_FPATH?=$(PROC_DATASET_DIR)/$(DEV_FNAME:.json=_filtered.json)
-PROC_TEST_FPATH?=$(PROC_DATASET_DIR)/$(TEST_FNAME:.json=_filtered.json)
-PROC_ALL_FPATH?=$(PROC_DATASET_DIR)/$(ALL_FNAME:.json=_filtered.json)
+RAW_TRAIN_FPATH = $(RAW_DATASET_DIR)/$(TRAIN_FNAME)
+RAW_DEV_FPATH = $(RAW_DATASET_DIR)/$(DEV_FNAME)
+RAW_TEST_FPATH = $(RAW_DATASET_DIR)/$(TEST_FNAME)
+RAW_ALL_FPATH = $(RAW_DATASET_DIR)/$(ALL_FNAME)
+PROC_TRAIN_FPATH = $(PROC_DATASET_DIR)/$(TRAIN_FNAME:.json=_filtered.json)
+PROC_DEV_FPATH = $(PROC_DATASET_DIR)/$(DEV_FNAME:.json=_filtered.json)
+PROC_TEST_FPATH = $(PROC_DATASET_DIR)/$(TEST_FNAME:.json=_filtered.json)
+PROC_ALL_FPATH = $(PROC_DATASET_DIR)/$(ALL_FNAME:.json=_filtered.json)
 
 
 # download and extract dataset
@@ -67,6 +67,10 @@ $(PROC_DATASET_DIR)/qa_test.tsv: $(PROC_TEST_FPATH)
 $(PROC_DATASET_DIR)/qa_all.tsv: $(PROC_ALL_FPATH)
 	python3 -m fgc_wiki_qa.data.get_qa_tsv $< $@
 
+# get toy dataset
+get_toy_dataset: $(PROC_DATASET_DIR)/toy_all.json
+$(PROC_DATASET_DIR)/toy_all.json: $(PROC_ALL_FPATH)
+	python3 -m fgc_wiki_qa.data.get_toy_dataset $< $@
 
 .PHONY: run run_eval run_exp
 
@@ -112,6 +116,3 @@ $(ERROR_ANALYSIS_FPATH) $(REPORT_FPATH) $(QIDS_FPATH): $(PROC_ALL_FPATH) $(EVAL_
 		--error_analysis $(ERROR_ANALYSIS_FPATH) \
 		--qids_fpath $(QIDS_FPATH)
 
-clean:
-	rm -rf data/processed/1.7.8
-	rm -rf data/raw/1.7.8
