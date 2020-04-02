@@ -2,7 +2,8 @@
 #  Unauthorized copying of this file, via any medium is strictly prohibited
 #  Proprietary and confidential
 #  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
-from typing import List, Dict, TextIO, Match
+from copy import deepcopy
+from typing import List, Dict, TextIO, Match, Tuple, Union
 import json
 
 from ansi.colour import fg
@@ -30,6 +31,53 @@ UNKNOWN_MESSAGE = 'Unknown in evaluation mode (if_evaluate=True)'
 
 # global variables
 prediction_results = []
+
+
+def is_span(span):
+    return len(span) == 2 and span[1] >= span[0] and isinstance(span[0], int) and isinstance(span[1], int)
+
+
+def in_span(span, limit_span):
+    assert is_span(span)
+    assert is_span(limit_span)
+    return span[0] >= limit_span[0] and span[1] <= limit_span[1]
+
+
+def in_spans(span, spans):
+    return any([in_span(span, limit_span) for limit_span in spans])
+
+
+def filter_psg_matches_w_shints(matches: List[Match], shint_spans: List[Tuple[int]]):
+    """
+    >>> filter_psg_matches_w_shints([(1, 3), (5, 7), (8, 10)], [(1, 2), (4, 7), (8, 10)])
+    [(5, 7), (8, 10)]
+    """
+    filtered_matches = []
+    for m in matches:
+        if in_spans(m.span(), shint_spans):
+            filtered_matches.append(m)
+
+    return filtered_matches
+
+
+def get_topn_amode_dicts(from_amode, amode_topn) -> dict:
+    if isinstance(from_amode, dict):
+        from_amode = sorted(from_amode.items(), key=lambda x: x[1]['score'], reverse=True)[:amode_topn]
+    elif isinstance(from_amode, list):
+        pass
+    else:
+        raise TypeError
+    return dict(from_amode)
+
+
+def get_topn_atype_dicts(from_atype, atype_topn):
+    if isinstance(from_atype, str):
+        atypes = [from_atype]
+    elif isinstance(from_atype, dict):
+        atypes = sorted(from_atype.items(), key=lambda x: x[1], reverse=True)[:atype_topn]
+    else:
+        raise TypeError
+    return dict(atypes)
 
 
 class WikiQA:
@@ -147,8 +195,8 @@ class WikiQA:
                 print(snp_pstr(question_ie_data.sentence[0]), end='')
             print('(Gold)', answers)
 
-            final_answers = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval,
-                                         neural_pred_infer)
+            final_answer = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval,
+                                        fgc_data['SENTS'], atype_dict, **kwargs)
 
             # ===== FINISHING STEP =====
             # transfer to FGC output api format
@@ -173,7 +221,9 @@ class WikiQA:
         #     print('saving results ...')
         #     df.to_csv('result.csv')
         return all_answers
-    def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval, neural_pred_infer):
+
+    def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval, psg_sents, atype_dict: dict,
+                neural_pred_infer=False, use_se='pred'):
         # ===== STEP A. parse question (parse entity name + predicate inference) =====
         if neural_pred_infer:
             parsed_result = parse_question_w_neural(qtext)
@@ -226,9 +276,27 @@ class WikiQA:
             print(bool(ms), end=' ')
         print()
 
+        # rule: filter out the matched span not in supporting evidences (Updated on 1.1)
+        print('(Passage Match)', [match.group(0) for match in matches])
+        if use_se != 'None':
+            if use_se == 'gold':
+                shint_sids = q_dict['SHINT']
+            elif use_se == 'pred':
+                shint_sids = q_dict['SHINT'][0]
+            elif use_se == 'pred_old':
+                shint_sids = q_dict['sp']
+            else:
+                raise ValueError
+            assert isinstance(shint_sids, list)
+            if len(shint_sids):
+                assert isinstance(shint_sids[0], int)
+            print('(INFO) Supporting Evidence', use_se, 'is used')
+            shint_spans = [(psg_sents[sid]['start'], psg_sents[sid]['end']) for sid in shint_sids]
+            matches = filter_psg_matches_w_shints(matches, shint_spans)
+
         # rule: Add matched text to answers (not matcher)
         answers.extend([match.group(0) for match in matches])
-        print('(Answers 1)', answers)
+        print('(Answers 1) (SE Match)', answers)
 
         # rule: find the matched NE in the passage
         mentions = []
@@ -268,19 +336,5 @@ class WikiQA:
 
 
 if __name__ == '__main__':
-    with open('data/raw/FGC_release_all(cn).json', encoding='utf-8') as f:
-        docs = json.load(f)
-
-    wiki_qa = WikiQA(server='http://140.109.19.191:9000')
-
-    # all_answers = []
-    # for item in data:
-    #     all_answers.append(wiki_qa.predict_on_qs_of_one_doc(item, if_save_result=False, use_fgc_kb=True))
-    # print(all_answers)
-
-    # use data[0] to just answer the first two passages for the pilot run
-    print(wiki_qa.predict_on_qs_of_one_doc(get_doc_with_one_que('D302Q01', docs), use_fgc_kb=False))
-    # docs = remove_docs_before_did('D274', docs)
-    # for doc in docs:
-    #     answers = wiki_qa.predict_on_qs_of_one_doc(doc, use_fgc_kb=False)
-        # break
+    import doctest
+    doctest.testmod(verbose=True)
