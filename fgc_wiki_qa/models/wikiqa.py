@@ -89,36 +89,37 @@ class WikiQA:
         with open(FGC_KB_PATH, 'r', encoding='utf-8') as f:
             self.kbqa_sheet = json.load(f)
 
-    def predict_on_docs(self, docs, file4eval_fpath, neural_pred_infer, use_fgc_kb):
+    def predict_on_docs(self, docs, file4eval_fpath, **kwargs):
         all_answers = []
         with open(file4eval_fpath, 'w', encoding='utf-8') as file4eval:
             print('qid\tparsed_subj\tparsed_pred\tsid\tpretty_values\tproc_values\tanswers\tanswer', file=file4eval)
             for doc in docs:
-                answers = self.predict_on_qs_of_one_doc(doc, use_fgc_kb=use_fgc_kb, file4eval=file4eval,
-                                                           neural_pred_infer=neural_pred_infer)
+                answers = self.predict_on_qs_of_one_doc(doc, file4eval, **kwargs)
                 all_answers.extend(answers)
                 print(answers)
         print(all_answers)
 
-    def predict_on_qs_of_one_doc(self, fgc_data, use_fgc_kb: bool = True, file4eval: TextIO = None,
-                                 neural_pred_infer: bool =False) -> List[List[Dict]]:
+    def predict_on_qs_of_one_doc(self, fgc_data, file4eval: TextIO = None, use_fgc_kb: bool = True, **kwargs) -> List[List[Dict]]:
         """
         :param bool neural_pred_infer: if using neural model to inference predicate (e.g. PID in wikidata)
         :param Dict fgc_data: fgc data at the level of document, i.e., one document with multiple questions
         :param bool use_fgc_kb: if using fgc kb to answer before the wiki-based QA module
         :param TextIO file4eval: the file to save stage-by-stage results for evaluation
+        :param bool neural_pred_infer: default is False
+        :param str use_se: pred or gold or None
         :return List[List[Dict]]: answers of all questions in this document (an answer is in the format of a `dict`
         """
         global nlp
         with CoreNLPClient(endpoint=self.corenlp_ip, annotators="tokenize,ssplit,lemma,pos,ner",
                            start_server=False) as nlp:
-            return self._predict_on_qs_of_one_doc(fgc_data, use_fgc_kb, file4eval, neural_pred_infer)
+            return self._predict_on_qs_of_one_doc(fgc_data, file4eval, use_fgc_kb, **kwargs)
 
     def _get_from_fgc_kb(self, qtext):
         if qtext in self.kbqa_sheet:
             return self.kbqa_sheet[qtext]
 
-    def _predict_on_qs_of_one_doc(self, fgc_data: dict, use_fgc_kb: bool, file4eval, neural_pred_infer) -> List[List[Dict]]:
+    def _predict_on_qs_of_one_doc(self, fgc_data: dict, file4eval, use_fgc_kb: bool = True, amode_topn=1, atype_topn=1,
+                                  **kwargs) -> List[List[Dict]]:
         # global q_dict, wd_item, rel, attr, predicate_matched, question_ie_data, passage_ie_data, mentions_bracketed, \
         #     dtext, answers, if_evaluate, qtext, debug_info
 
