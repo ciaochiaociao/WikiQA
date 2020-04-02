@@ -2,8 +2,8 @@
 #  Unauthorized copying of this file, via any medium is strictly prohibited
 #  Proprietary and confidential
 #  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
-from .neural_predicate_inference.predict import predicate_inference
-from ..utils.wikidata4fgc_v2 import get_all_aliases_from_pid
+from .neural_predicate_inference.predict import NeuralPredicateInferencer
+from ..utils.wikidata_utils import get_all_aliases_from_pid
 
 
 def parse_question_w_neural(qtext):
@@ -13,7 +13,8 @@ def parse_question_w_neural(qtext):
     :return Union[(str, str, Tuple[int]), False]: subject, attr_name, span_of_all_possible_subjects
     """
     # neural predicate inference
-    pid = predicate_inference(qtext)
+    npi = NeuralPredicateInferencer()
+    pid = npi.predicate_inference(qtext)
     try:
         attr_name = get_all_aliases_from_pid(pid)[0][0]  # take the main label  # TODO: use PID instead
     except IndexError:
