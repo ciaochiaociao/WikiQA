@@ -160,20 +160,20 @@ class WikiQA:
 
             from_amode: Union[List[str], dict] = q_dict['AMODE']
             from_atype: Union[str, dict] = q_dict['ATYPE']
-            if isinstance(from_amode, dict):
+            if isinstance(from_amode, dict):  # pred
                 def _filter_simplify_dict(dict_with_score: dict):
                     return {k: v['score'] for k, v in dict_with_score.items()}
 
                 amode_dict = get_topn_amode_dicts(from_amode, amode_topn)
                 amode_dict = _filter_simplify_dict(amode_dict)
-            elif isinstance(from_amode, list):
-                amode_dict = from_amode
+            elif isinstance(from_amode, list):  # gold
+                amode_dict = {mode: 1 for mode in from_amode}
             else:
                 raise TypeError
-            if isinstance(from_atype, dict):
+            if isinstance(from_atype, dict):  # pred
                 atype_dict = get_topn_atype_dicts(from_atype, atype_topn)
-            elif isinstance(from_atype, str):
-                atype_dict = from_atype
+            elif isinstance(from_atype, str):  # gold
+                atype_dict = {from_atype: 1}
             else:
                 raise TypeError
             # rule: filter out unwanted mode
