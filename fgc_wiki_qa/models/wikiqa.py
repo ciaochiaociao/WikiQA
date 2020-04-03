@@ -177,12 +177,19 @@ class WikiQA:
             else:
                 raise TypeError
             # rule: filter out unwanted mode
-            if set(amode_dict) & set(['Yes-No', 'Comparing-Members', 'Kinship', 'Arithmetic-Operations',  'Multi-Spans-Extraction', 'Counting']):
+            # rule: filter out unwanted qtype
+            if set(amode_dict) & set(['Yes-No', 'Kinship']) or \
+                q_dict["QTYPE"] == '申論':
+                q_anses = [{
+                    'AMODULE': 'WikiQA',
+                    'ATEXT': '',
+                    'SCORE': 0.0,
+                    'SCORE_S': 0.0,
+                    'SCORE_E': 0.0
+                }]
+                all_answers.append(q_anses)
+                print(q_dict['QID'] + '\tskipped\tskipped\t\t\t\t\t', file=file4eval)
                 continue
-            # rule: filter out unwanted type
-            # if atype in ['Object']:
-            #     continue
-
             # for evaluation
             if if_evaluate:
                 answers = [a['ATEXT_CN'] for a in q_dict['ANSWER']]
