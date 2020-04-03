@@ -66,6 +66,8 @@ how_many = '(几|多少|多)'
 how = '多(么|嬤|麽|嚜)?'
 high = '高'
 
+is_what_name = f'({is_}{what}名字|(的)?名字({is_})?{what}|{is_}{who})'
+
 custom = {
     '出生年份': '出生日期',
     '死亡年份': '死亡日期',
@@ -73,7 +75,6 @@ custom = {
     '寿命': ['死亡日期', '出生日期']
 }
 strict_label_map = {
-    '名字': [f'^{name}{is_}{what}名字', f'^{name}(的)?名字{what}', f'^{name}(的)?名字{is_}{what}'],
     # rule 2-1-a: 地方
     '出生地': [f'^{name}的老家', f'^{name}(的)?{birth}.*{place_all}',
             f'^{name}{birth_all}.*{where_all}', f'{where_all}{is_}{name}(的)?{birth_all}',
@@ -101,9 +102,9 @@ strict_label_map = {
     '担任职务': [f'^{name}(的)?(职称|岗位)'],
     '创办者': [f'{name}(的)?{found}(人|者)', f'{who}.*{found}(了)?{name}', f'{start}.*{found}(了)?{name}'],
     '高度': [f'^{name}(的)?{height}', f'^{name}({is_})?{how_many}{height_unit}', f'^{name}({is_})?{how}{high}'],
-    '配偶': [f'^{name}(的)?(妻子|老婆|配偶)({is_})?{who}'],
-    '父亲': [f'^{name}(的)?(爸爸|父亲|老爸)({is_})?{who}'],
-    '母亲': [f'^{name}(的)?(妈妈|母亲|老母)({is_})?{who}'],
+    '配偶': [f'^{name}(的)?(妻子|老婆|配偶){is_what_name}'],
+    '父亲': [f'^{name}(的)?(爸爸|父亲|老爸){is_what_name}'],
+    '母亲': [f'^{name}(的)?(妈妈|母亲|老母){is_what_name}'],
     '子女数目': [f'^{name}((总共)|共)?{have}{how_many}个(小孩|孩子)'],
 
     '寿命': [f'^{name}(享年|得年|{death_all}).*{how_many}岁', f'^{name}{how_many}岁.*(享年|得年|{death_all})']
