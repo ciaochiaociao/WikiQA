@@ -109,7 +109,7 @@ def get_year(life_span: timedelta):
     return life_span.days//365
 
 
-def postprocess_datavalue(datavalue, attr):
+def postprocess_datavalue(datavalue, attr) -> List[str]:
     if attr == '寿命':
         dod, dob = datavalue
         from datetime import date

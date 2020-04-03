@@ -3,6 +3,7 @@
 #  Proprietary and confidential
 #  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
 from copy import deepcopy
+from functools import partial
 from typing import List, Dict, TextIO, Match, Tuple, Union
 import json
 
@@ -78,6 +79,16 @@ def get_topn_atype_dicts(from_atype, atype_topn):
     else:
         raise TypeError
     return dict(atypes)
+
+
+def filter_ans_for_attrs(processed_datavalues, attr, q_dict):
+    if attr == '名字':
+        def _ans_not_in_q(value, q_dict):
+            return value not in q_dict['QTEXT_CN']
+
+        _ans_not_in_q = partial(_ans_not_in_q, q_dict=q_dict)
+        processed_datavalues = list(filter(_ans_not_in_q, processed_datavalues))
+    return processed_datavalues
 
 
 class WikiQA:
