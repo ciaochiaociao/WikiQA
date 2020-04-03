@@ -49,7 +49,7 @@ def postprocess(datavalue, datatype, attr):
         object_aliases = datavalue['all_aliases']  # a tuple
         postprocessed = [name for names in object_aliases for name in names]
     elif datatype == 'time':
-        day, month, year = parse_time(datavalue)
+        year, month, day = parse_time(datavalue)
         if '年份' in attr:
             time_formats = [
                 '{}年'.format(year),
