@@ -1,3 +1,4 @@
+click
 opencc-python-reimplemented
 pymongo
 stanfordnlp
