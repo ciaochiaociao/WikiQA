@@ -1,4 +1,4 @@
-.PHONY: all downlad filter get_qa merge extract get_toy_dataset
+.PHONY: all downlad filter get_qa merge extract get_toy_dataset compare
 
 all: merge filter get_qa get_toy_dataset
 get: download extract
@@ -97,6 +97,12 @@ $(PROC_DATASET_DIR)/qa_test.tsv: $(PROC_TEST_FPATH)
 $(PROC_DATASET_DIR)/qa_all.tsv: $(PROC_ALL_FPATH)
 	python3 -m fgc_wiki_qa.data.get_qa_tsv $< $@
 
+$(RAW_DATASET_DIR)/qa_all.tsv: $(RAW_ALL_FPATH)
+	chmod u+w $(@D) && \
+	python3 -m fgc_wiki_qa.data.get_qa_tsv $< $@
+	chmod 444 $@;
+	chmod u-w $(@D)
+
 # get toy dataset
 get_toy_dataset: $(PROC_DATASET_DIR)/toy_all.json
 $(PROC_DATASET_DIR)/toy_all.json: $(PROC_ALL_FPATH)
@@ -109,7 +115,9 @@ PRED_INFER?=rule
 
 EVAL_FPATH=$(EXP_DIR)/file4eval_all.tsv
 
-# examples: make run_exp EXP_DIR=experiments/v1.02_on_1.7.8_revise_sp PRED_INFER=rule FGC_VER=1.7.8-revise-sp USE_SE=pred
+# examples: make run_exp EXP_DIR=experiments/v1.02_on_1.7.8_revise_sp PRED_INFER=rule FGC_VER=1.7.8-revise-sp RUN_ON=raw USE_SE=pred
+# inputs: EXP_DIR RUN_ON PRED_INFER FGC_VER USE_SE
+
 run_exp:
 	mkdir -p $(EXP_DIR)
 	$(MAKE) run
@@ -127,8 +135,7 @@ $(EVAL_FPATH): $(PROC_ALL_FPATH)
 		--eval_fpath $@ | tee $(RUN_LOG)
 
 
-# inputs
-QA_FPATH ?= $(PROC_DATASET_DIR)/qa_all.tsv
+# inputs: QA_FPATH
 
 # outputs
 ERROR_ANALYSIS_FPATH ?= $(EXP_DIR)/error_analysis_all.xlsx
@@ -137,9 +144,9 @@ QIDS_FPATH ?= $(EXP_DIR)/qids_all.json
 
 run_eval: $(ERROR_ANALYSIS_FPATH) $(REPORT_FPATH) $(QIDS_FPATH)
 
-$(ERROR_ANALYSIS_FPATH) $(REPORT_FPATH) $(QIDS_FPATH): $(PROC_ALL_FPATH) $(EVAL_FPATH) $(QA_FPATH)
+$(ERROR_ANALYSIS_FPATH) $(REPORT_FPATH) $(QIDS_FPATH): $(DATASET_FPATH) $(EVAL_FPATH) $(QA_FPATH)
 	python3 -m fgc_wiki_qa.commands.evaluate \
-		--fgc_fpath $(PROC_ALL_FPATH) \
+		--fgc_fpath $(DATASET_FPATH) \
 		--fgc_qa_fpath $(QA_FPATH) \
 		--eval_fpath $(EVAL_FPATH) \
 		--wiki_benchmark data/external/fgc_wiki_benchmark_v0.1.tsv \
@@ -147,3 +154,16 @@ $(ERROR_ANALYSIS_FPATH) $(REPORT_FPATH) $(QIDS_FPATH): $(PROC_ALL_FPATH) $(EVAL_
 		--error_analysis $(ERROR_ANALYSIS_FPATH) \
 		--qids_fpath $(QIDS_FPATH)
 
+# [compare]
+# examples: make compare EXP_DIR=... COMPARED_EXP_DIR=...
+COMPARED ?= $(COMPARED_EXP_DIR)/qids_all.json
+COMPARE_FPATH_NAME ?= $(EXP_DIR)/$(notdir $(EXP_DIR))_VS_$(notdir $(COMPARED_EXP_DIR))
+
+compare: $(COMPARE_FPATH_NAME).json $(COMPARE_FPATH_NAME).txt
+
+$(COMPARE_FPATH_NAME).json $(COMPARE_FPATH_NAME).txt:
+	python3 -m fgc_wiki_qa.metrics.analyze_qids \
+		--qids_fpath $(QIDS_FPATH) \
+		--already_qids_fpath $(COMPARED) \
+		--save_fpath $(COMPARE_FPATH_NAME).json \
+		--report_fpath $(COMPARE_FPATH_NAME).txt
