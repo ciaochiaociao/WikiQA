@@ -107,7 +107,8 @@ strict_label_map = {
     '母亲': [f'^{name}(的)?(妈妈|母亲|老母){is_what_name}'],
     '子女数目': [f'^{name}((总共)|共)?{have}{how_many}个(小孩|孩子)'],
 
-    '寿命': [f'^{name}(享年|得年|{death_all}).*{how_many}岁', f'^{name}{how_many}岁.*(享年|得年|{death_all})']
+    '寿命': [f'^{name}(享年|得年|{death_all}).*{how_many}岁', f'^{name}{how_many}岁.*(享年|得年|{death_all})'],
+    '名字': [f'^{name}{is_what_name}.{{0,3}}$', f'^{name}(的)?(本名|全名){is_what_name}'],
 
 }
 
