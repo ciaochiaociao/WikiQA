@@ -192,7 +192,10 @@ class WikiQA:
                 continue
             # for evaluation
             if if_evaluate:
-                answers = [a['ATEXT_CN'] for a in q_dict['ANSWER']]
+                try:
+                    answers = [a['ATEXT_CN'] for a in q_dict['ANSWER']]
+                except KeyError:
+                    answers = f'NO ANSWER FOR {q_dict["QID"], q_dict["QTYPE"]}'
             else:
                 answers = UNKNOWN_MESSAGE
 
