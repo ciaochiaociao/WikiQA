@@ -65,7 +65,11 @@ def data_to_csv(docs, f):
     print('qid', 'qtext', 'atext', 'qtype', 'atype', 'amode', sep='\t', file=f)
     for doc in docs:
         for q in doc['QUESTIONS']:
-            print(q['QID'], q['QTEXT_CN'], [ans['ATEXT_CN'] for ans in q['ANSWER']], q['QTYPE'], q['ATYPE'], q['AMODE'], sep='\t', file=f)
+            try:
+                answers = [ans['ATEXT_CN'] for ans in q['ANSWER']]
+            except KeyError:
+                answers = []
+            print(q['QID'], q['QTEXT_CN'], answers, q['QTYPE'], q['ATYPE'], q['AMODE'], sep='\t', file=f)
 
 
 def q_doc_generator(docs):

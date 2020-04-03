@@ -67,7 +67,7 @@ def evaluate(already_corrects, already_errors, fgc_fpath, file4eval, fgc_pred_in
     sys.stdout = tee_logger
     docs = load_json(fgc_fpath)
     df_pred = pandas.read_csv(file4eval, sep='\t', header=0)
-    df_wiki_pred = pandas.read_csv(fgc_pred_infer_fpath, sep='\t', header=0)
+    df_wiki_pred = pandas.read_csv(fgc_pred_infer_fpath, header=0)
     predicted = df_pred[(df_pred.answer.notna()) & (df_pred.answer != 'None')]
     if len(predicted) == 0:
         print('No questions are successfully answered')
@@ -99,8 +99,8 @@ def evaluate(already_corrects, already_errors, fgc_fpath, file4eval, fgc_pred_in
     print('# questions trying to answer:', len(questions_filtered))
     print('# questions that activate WikiQA: {} ({:.1%}) (Parse Q / Predicate Inference) (ratio to ideal: {:.1%})'.format(
         len(parsed),
-        len(parsed) / len(questions_filtered)),
-        len(parsed) / len(questions_has_gold_predicate))
+        len(parsed) / len(questions_filtered),
+        len(parsed) / len(questions_has_gold_predicate)))
     print('\t# after entity linking: {} ({:.1%})'.format(
         len(ent_linked),
         len(ent_linked) / len(parsed)))
