@@ -83,7 +83,7 @@ $(PROC_ALL_FPATH) :
 	python3 -m fgc_wiki_qa.data.filter_dataset $(RAW_ALL_FPATH) $@
 
 # get_qa
-get_qa: $(PROC_DATASET_DIR)/qa_train.tsv $(PROC_DATASET_DIR)/qa_dev.tsv $(PROC_DATASET_DIR)/qa_test.tsv $(PROC_DATASET_DIR)/qa_all.tsv
+get_qa: $(PROC_DATASET_DIR)/qa_train.tsv $(PROC_DATASET_DIR)/qa_dev.tsv $(PROC_DATASET_DIR)/qa_test.tsv $(PROC_DATASET_DIR)/qa_all.tsv $(RAW_DATASET_DIR)/qa_all.tsv
 
 $(PROC_DATASET_DIR)/qa_train.tsv: $(PROC_TRAIN_FPATH)
 	python3 -m fgc_wiki_qa.data.get_qa_tsv $< $@
@@ -127,7 +127,19 @@ RUN_LOG = $(EXP_DIR)/run.log
 
 run: $(EVAL_FPATH)
 
-$(EVAL_FPATH): $(PROC_ALL_FPATH)
+$(info 'run_on' $(RUN_ON))
+
+ifeq ($(RUN_ON), proc)
+	DATASET_FPATH = $(PROC_ALL_FPATH)
+	QA_FPATH = $(PROC_DATASET_DIR)/qa_all.tsv
+else ifeq ($(RUN_ON), raw)
+	DATASET_FPATH = $(RAW_ALL_FPATH)
+	QA_FPATH = $(RAW_DATASET_DIR)/qa_all.tsv
+else
+$(info 'unrecognized RUN_ON:' $(RUN_ON))
+endif
+
+$(EVAL_FPATH): $(DATASET_FPATH)
 	python3 -m fgc_wiki_qa.commands.run_on_fgc \
 		--fgc_fpath $< \
 		--pred_infer $(PRED_INFER) \
