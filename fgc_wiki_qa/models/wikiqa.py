@@ -340,7 +340,8 @@ class WikiQA:
         print('(Answers 2)', answers)
 
         # rule: add traversed values for '寿命' (no need to match with passage)
-        answers.extend(processed_datavalues)
+        if attr in ['寿命']:
+            answers.extend(processed_datavalues)
 
         # clean with removing duplicates
         final_answers = list(remove_duplicates(answers, qtext))
