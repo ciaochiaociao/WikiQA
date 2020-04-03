@@ -82,7 +82,7 @@ strict_label_map = {
     '死亡地': [f'^{name}的死亡地', f'^{name}{death_all}{_in}{place_all}',
             f'^{name}{_in}{where_all}{death_all}',
             f'^{name}{death_all}{_in}{where_all}', f'{where_all}{is_}{name}的{death_all}'],
-    '墓地': [],
+    '墓地': [f'^{name}葬{_in}{where_all}', f'^{name}(的)?(墓地|坟墓|墓){_in}{where_all}'],
     # rule 2-1-b: 时间
     '出生年份': [f'^{name}(是|{_in})?{which_all}{year}.*{birth_all}', f'^{name}(的)?{birth_all}.*{which_all}{year}'],
     '出生日期': [f'^{name}(的)?生日', f'^{name}(的)?出生日期', f'^{name}(的)?出生日',

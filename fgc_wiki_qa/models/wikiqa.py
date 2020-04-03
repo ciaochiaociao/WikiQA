@@ -300,6 +300,9 @@ class WikiQA:
             processed_datavalues.extend(processed_list)
         print('(Post-Proc)', processed_datavalues)
 
+        # ===== STEP D-E. Extra filtering rules =====
+        processed_datavalues = filter_ans_for_attrs(processed_datavalues, attr, q_dict)
+
         # ===== STEP E. Coordinating with Passage =====
         answers = []
         # rule 3-1: if fuzzy matching datavalue (answer) with passage text (edit distance <= 1) -> generate answer
