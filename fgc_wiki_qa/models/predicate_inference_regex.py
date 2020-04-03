@@ -71,6 +71,7 @@ is_what_name = f'({is_}{what}名字|(的)?名字({is_})?{what}|{is_}{who})'
 custom = {
     '出生年份': '出生日期',
     '死亡年份': '死亡日期',
+    '成立或建立年份': '成立或建立时间',
     '朝代': '国籍',
     '寿命': ['死亡日期', '出生日期']
 }
@@ -90,6 +91,8 @@ strict_label_map = {
     '死亡年份': [f'^{name}(是|{_in})?{which_all}{year}.*{death_all}', f'^{name}(的)?{death_all}.*{which_all}{year}'],
     '死亡日期': [f'^{name}(的)?死亡地',
              f'^{name}(是|{_in})?{when}.*{death_all}', f'^{name}(的)?{death_all}.*{when}'],
+    '成立或建立年份': [f'^{name}(的)?{start}{year}',
+                f'^{name}(是|{_in})?{which_all}{year}.*{start}', f'^{name}{start}.*(是|{_in})?{which_all}{year}'],
     '成立或建立时间': [f'^{name}(的)?{start}.*{time}',
                 f'^{name}(是|{_in})?{when}.*{start}', f'^{name}{start}.*{when}'],
     # rule 2-1-c: 人物资讯
