@@ -89,13 +89,7 @@ def match_type(mention, ans_types: List[str], qtext):
     def _other_rules(qtext, ans_types, ent_ans_map):
         return '朝代' in qtext and set(ans_types) & set(ent_ans_map['COUNTRY'] + ent_ans_map['TIME'])
 
-    def _bracketed_mention_match_ans_type():
-        # mentions_bracketed
-        # TODO
-        pass
-
     if set(ans_types) & set(ent_ans_map[mention.entityType]) or \
-            _bracketed_mention_match_ans_type() or \
             _other_rules(qtext, ans_types, ent_ans_map):
         # logging.warning(
         #     f'matching the type: ans_type - {ans_type}, snp_mention - {snp_mention.entityMentionText}({snp_mention.entityType})')

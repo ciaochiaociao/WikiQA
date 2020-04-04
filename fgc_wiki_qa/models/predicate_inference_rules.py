@@ -10,10 +10,6 @@ from .predicate_inference_regex import strict_label_map
 
 def parse_question_by_regex(qtext):
 
-    # TODO
-    # for attr_name, alias_name in alias_map.items():
-    #     attr_name, alias_name
-
     for attr, patterns in strict_label_map.items():
         for pattern in patterns:
             pattern = re.compile(pattern)

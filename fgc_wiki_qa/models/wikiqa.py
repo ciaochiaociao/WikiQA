@@ -88,6 +88,9 @@ def filter_ans_for_attrs(processed_datavalues, attr, q_dict):
 
         _ans_not_in_q = partial(_ans_not_in_q, q_dict=q_dict)
         processed_datavalues = list(filter(_ans_not_in_q, processed_datavalues))
+    elif attr == '朝代':  # TODO: Check with Wikidata item instead by using `instanceOf` predicate
+        f = lambda value: not value.endswith('国')
+        processed_datavalues = list(filter(f, processed_datavalues))
     return processed_datavalues
 
 
@@ -214,7 +217,7 @@ class WikiQA:
             qtext = q_dict['QTEXT_CN']
 
             # get IE data for question
-            # TODO: don't add ssplit because there is a bug in CoreNLP: the NERMention tokenStartInSentenceInclusive
+            # don't add ssplit because there is a bug in CoreNLP: the NERMention tokenStartInSentenceInclusive
             # uses the location index in the original text without sentence split rather than with split even with
             # ssplit annotator on
             question_ie_data = nlp.annotate(qtext,

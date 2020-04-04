@@ -40,9 +40,6 @@ def evaluate(fgc_fpath, file4eval, fgc_pred_infer_fpath, tee_logger, qids_fpath,
         else:
             errors.append(q['QID'])
 
-    # evalute predicate inference
-    # TODO
-
     # statistics
     num_corrects, num_errors, num_answered = len(corrects), len(errors), len(corrects) + len(errors)
     prec = num_corrects / num_answered
@@ -69,11 +66,6 @@ def evaluate(fgc_fpath, file4eval, fgc_pred_infer_fpath, tee_logger, qids_fpath,
     print('Correct\'s QIDs:', corrects)
     print('Error\'s QIDs:', errors)
 
-    # qids_by_stage_dict = {
-    #     'fn_predicates': get_fn_predicates(parsed, questions_has_gold_predicate.qid.to_list()),
-    #     'fp_predicates': get_fp_predicates(parsed, questions_has_gold_predicate.qid.to_list()),
-    #     'tp_predicates': get_tp_predicates(parsed, questions_has_gold_predicate.qid.to_list()),
-    # }
     qids_dict = {
         'corrects': corrects,
         'errors': errors
