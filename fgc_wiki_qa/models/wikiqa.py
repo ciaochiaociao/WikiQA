@@ -355,15 +355,19 @@ class WikiQA:
         if matches:
             for match in matches:
                 mentions.extend(list(snp_get_ents_by_overlapping_char_span_in_doc(match.span(0), passage_ie_data)))
-        print('(NE)', [mention.entityMentionText for mention in mentions])
+        print('(NE Exp/Dim)', [mention.entityMentionText for mention in mentions])
 
-        # rule: match ans type and mention type
+        # rule: match ans type and mention type excluding some predicates
+        # if attr not in ['出生年份', '死亡年份', '成立或建立年份']:
         mentions = [mention for mention in mentions if match_type(mention, atype_dict.keys(), qtext)]
         print('(NE-ANS Type Match)', [mention.entityMentionText for mention in mentions])
 
         # rule: Use matched NE (expansion/diminishing) from psg as answers
-        if attr not in ['朝代', '出生年份', '死亡年份']:
+        if attr not in ['朝代', '出生年份', '死亡年份', '成立或建立年份']:
             answers.extend([mention.entityMentionText for mention in mentions])
+        else:
+            print(f'[INFO] NEs are not added to answers for {attr}')
+
         print('(Answers 2)', answers)
 
         # rule: add traversed values for '寿命' (no need to match with passage)
