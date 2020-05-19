@@ -195,6 +195,28 @@ coarse2fines_map = {
 }
 
 
+def pred_in_ans(pred, golds):
+    pred_set = set(re.split(r'及|以及|和|與|、|,|，',pred))
+    gold_sets = [set(re.split(r'及|以及|和|與|、|,|，', gold)) for gold in golds]
+    if pred_set in gold_sets:
+        return True
+    else:
+        return False
+
+
+def correct_gen(docs):
+    for q, doc in q_doc_generator(docs):
+        golds = [a['ATEXT']for a in q['ANSWER']]
+        pred = q['AFINAL']['ATEXT_TW']
+        if pred_in_ans(pred, golds):
+            yield q, doc
+
+def error_gen(docs):
+    for q, doc in q_doc_generator(docs):
+        golds = [a['ATEXT']for a in q['ANSWER']]
+        pred = q['AFINAL']['ATEXT_TW']
+        if not pred_in_ans(pred, golds):
+            yield q, doc
 
 
 
