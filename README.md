@@ -17,6 +17,8 @@ numpy
 
 ## Installation
 `pip install -r requirements.txt`
+`scp -r cwhsu@140.109.19.51:/workspace/FGC/WIKIKB4FGC/mongodb_dbpath_wiki_zh> /path/to/mongodbdata`
+changing `/path/to/mongodbdata` in `docker-compose.yml` file
 `sudo docker-compose up  # for setting up Stanford CoreNLP, Wikidata Monogo Database`
 
 ## Production

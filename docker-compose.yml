@@ -13,6 +13,6 @@ services:
     ports:
       - 27020:27020
     volumes:
-      - /home/fgc34/mongodbdata:/mongodbdata
+      - /path/to/mongodbdata:/mongodbdata
     command:  mongod --dbpath /mongodbdata --port 27020 --bind_ip_all
     container_name: compose_mongodb
