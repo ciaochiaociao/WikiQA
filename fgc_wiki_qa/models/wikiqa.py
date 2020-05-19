@@ -185,17 +185,18 @@ class WikiQA:
                 raise TypeError
             # rule: filter out unwanted mode
             # rule: filter out unwanted qtype
-            if set(amode_dict) & set(['Yes-No', 'Kinship']) or \
-                q_dict["QTYPE"] == '申論':
-                q_anses = [{
-                    'AMODULE': 'WikiQA',
+            if q_dict["QTYPE"] == '申論' or \
+                    set(amode_dict) & set(['Yes-No', 'Kinship', 'Multi-Spans-Extraction']):
+                ans_dict = {
+                    'AMODULE': 'Wiki-Kb-Inference',
                     'ATEXT': '',
-                    'SCORE': 0.0,
-                    'SCORE_S': 0.0,
-                    'SCORE_E': 0.0
-                }]
-                all_answers.append(q_anses)
-                print(q_dict['QID'] + '\tskipped\tskipped\t\t\t\t\t', file=file4eval)
+                    'score': 0.0,
+                    'start_score': 0.0,
+                    'end_score': 0.0
+                }
+                all_answers.append(ans_dict)
+                if self.file4eval:
+                    print(q_dict['QID'] + '\tskipped\tskipped\t\t\t\t\t', file=self.file4eval, flush=True)
                 continue
             # for evaluation
             if if_evaluate:
@@ -244,7 +245,7 @@ class WikiQA:
                 ans_dict = {
                     # 'QID': q_dict['QID'],  # for debugging
                     # 'QTEXT': qtext,  # for debugging
-                    'AMODULE': 'WikiQA',
+                    'AMODULE': 'Wiki-Kb-Inference',
                     'ATEXT': final_answer,
                     'score': 1.0,
                     'start_score': 0.0,
