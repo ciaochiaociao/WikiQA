@@ -69,7 +69,10 @@ def data_to_csv(docs, f):
                 answers = [ans['ATEXT_CN'] for ans in q['ANSWER']]
             except KeyError:
                 answers = []
-            print(q['QID'], q['QTEXT_CN'], answers, q['QTYPE'], q['ATYPE'], q['AMODE'], sep='\t', file=f)
+            if 'ATYPE' in q and 'AMODE' in q:
+                print(q['QID'], q['QTEXT_CN'], answers, q['QTYPE'], q['ATYPE'], q['AMODE'], sep='\t', file=f)
+            else:  # 申论
+                print(q['QID'], q['QTEXT_CN'], answers, q['QTYPE'], 'None', 'None', sep='\t', file=f)
 
 
 def q_doc_generator(docs):

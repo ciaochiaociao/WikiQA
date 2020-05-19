@@ -21,8 +21,11 @@ def main(fgc_fpath='FGC_release_all(cn).json', output_fpath='FGC_release_all(cn)
     g = q_doc_generator(docs)
     qids = []
     for q, doc in g:
-        if set(q['AMODE']) & set(amodes) and q['QTYPE'] not in noqtypes:
-            qids.append(q['QID'])
+        try:
+            if set(q['AMODE']) & set(amodes) and q['QTYPE'] not in noqtypes:
+                qids.append(q['QID'])
+        except KeyError:  # 申论
+            pass
 
     newdocs = get_docs_with_certain_qs(qids, docs)
     with open(output_fpath, 'w', encoding='utf-8') as f:

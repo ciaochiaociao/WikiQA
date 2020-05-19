@@ -168,24 +168,25 @@ class WikiQA:
                               file=self.file4eval, flush=True)
                     continue
 
-            from_amode: Union[List[str], dict] = q_dict['AMODE']
-            from_atype: Union[str, dict] = q_dict['ATYPE']
-            if isinstance(from_amode, dict):  # pred
-                def _filter_simplify_dict(dict_with_score: dict):
-                    return {k: v['score'] for k, v in dict_with_score.items()}
+            if q_dict["QTYPE"] != '申論':
+                from_amode: Union[List[str], dict] = q_dict['AMODE']
+                from_atype: Union[str, dict] = q_dict['ATYPE']
+                if isinstance(from_amode, dict):  # pred
+                    def _filter_simplify_dict(dict_with_score: dict):
+                        return {k: v['score'] for k, v in dict_with_score.items()}
 
-                amode_dict = get_topn_amode_dicts(from_amode, amode_topn)
-                amode_dict = _filter_simplify_dict(amode_dict)
-            elif isinstance(from_amode, list):  # gold
-                amode_dict = {mode: 1 for mode in from_amode}
-            else:
-                raise TypeError
-            if isinstance(from_atype, dict):  # pred
-                atype_dict = get_topn_atype_dicts(from_atype, atype_topn)
-            elif isinstance(from_atype, str):  # gold
-                atype_dict = {from_atype: 1}
-            else:
-                raise TypeError
+                    amode_dict = get_topn_amode_dicts(from_amode, self.config.amode_topn)
+                    amode_dict = _filter_simplify_dict(amode_dict)
+                elif isinstance(from_amode, list):  # gold
+                    amode_dict = {mode: 1 for mode in from_amode}
+                else:
+                    raise TypeError
+                if isinstance(from_atype, dict):  # pred
+                    atype_dict = get_topn_atype_dicts(from_atype, self.config.atype_topn)
+                elif isinstance(from_atype, str):  # gold
+                    atype_dict = {from_atype: 1}
+                else:
+                    raise TypeError
             # rule: filter out unwanted mode
             # rule: filter out unwanted qtype
             if q_dict["QTYPE"] == '申論' or \
@@ -237,6 +238,12 @@ class WikiQA:
             else:
                 print(snp_pstr(question_ie_data.sentence[0]), end='')
             print('(Gold)', answers)
+            try:  # 1.7.13+
+                print('(Gold SE)', [(sid, fgc_data['SENTS'][sid]['text']) for sid in fgc_data['QUESTIONS'][0]['SHINT_']])
+                print('(Pred SE)', [(sid, fgc_data['SENTS'][sid]['text']) for sid in fgc_data['QUESTIONS'][0]['SHINT'][0]])
+            except KeyError:  # 1.7.12-
+                print('(Gold SE)', [(sid, fgc_data['SENTS'][sid]['text']) for sid in fgc_data['QUESTIONS'][0]['SHINT'][0]])
+            print('----------')
 
             final_answer = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval,
                                         fgc_data['SENTS'], atype_dict, **kwargs)
@@ -392,6 +399,39 @@ class WikiQA:
                   final_answer, sep='\t', file=file4eval, flush=True)
 
         return final_answer
+
+
+def get_shint_sids(q_dict, use_se):
+    """Adaptor function for getting supporting evidence sentence ids for different versions of datasets
+    1.7.13+:
+        List[int] SHINT_: Gold
+        [List[int], Dict[str, float]] SHINT: [Pred, Pred Score]
+    1.7.12:
+        [List[int], Dict[str, float]] SHINT: [Gold, Pred Score]
+    1.7.8-revise-sp:
+        List[int] SHINT: Gold
+        List[int] sp: Pred
+        List[int] answer_sp: Sentence of gold answer
+        List[float] sp_scores: Prediction Scores of every sentence in SENTS
+    """
+    if use_se == 'gold':
+        try:
+            shint_sids = q_dict['SHINT_']
+        except:
+            print('[WARN] SHINT_ attribute (1.7.13+) is not in the dataset. '
+                  'SHINT (1.7.12-) is used for gold supporting evidence instead.')
+            shint_sids = q_dict['SHINT']
+    elif use_se == 'pred':
+        shint_sids = q_dict['SHINT'][0]
+    elif use_se == 'pred_old':
+        shint_sids = q_dict['sp']
+    else:
+        raise ValueError
+    assert isinstance(shint_sids, list)
+    if len(shint_sids):
+        assert isinstance(shint_sids[0], int)
+    print('(INFO) Supporting Evidence', use_se, 'is used')
+    return shint_sids
 
 
 if __name__ == '__main__':
