@@ -2,6 +2,9 @@
 #  Unauthorized copying of this file, via any medium is strictly prohibited
 #  Proprietary and confidential
 #  Written by Chiao-Wei Hsu <cwhsu@iis.sinica.edu.tw>
+import copy
+import logging
+import sys
 from copy import deepcopy
 from functools import partial
 from typing import List, Dict, TextIO, Match, Tuple, Union
@@ -13,8 +16,10 @@ from os.path import abspath, dirname
 from stanfordnlp.server import CoreNLPClient
 # Below line should only be called after stanfordnlp to prevent seg fault
 from google.protobuf.pyext._message import SetAllowOversizeProtos
-# # fix bug: google.protobuf.message.DecodeError: Error parsing message
-# # ref: https://github.com/stanfordnlp/stanfordnlp/issues/154
+# fix bug: google.protobuf.message.DecodeError: Error parsing message
+# ref: https://github.com/stanfordnlp/stanfordnlp/issues/154
+from ..utils.utils import TeeLogger
+
 SetAllowOversizeProtos(True)
 
 from ..utils.fgc_utils import get_doc_with_one_que
@@ -78,12 +83,12 @@ def get_topn_atype_dicts(from_atype, atype_topn):
     return dict(atypes)
 
 
-def filter_ans_for_attrs(processed_datavalues, attr, q_dict):
+def filter_ans_for_attrs(processed_datavalues, attr, qtext):
     if attr == '名字':
-        def _ans_not_in_q(value, q_dict):
-            return value not in q_dict['QTEXT_CN']
+        def _ans_not_in_q(value, qtext):
+            return value not in qtext
 
-        _ans_not_in_q = partial(_ans_not_in_q, q_dict=q_dict)
+        _ans_not_in_q = partial(_ans_not_in_q, qtext=qtext)
         processed_datavalues = list(filter(_ans_not_in_q, processed_datavalues))
     elif attr == '朝代':  # TODO: Check with Wikidata item instead by using `instanceOf` predicate
         f = lambda value: not value.endswith('国')
@@ -133,9 +138,7 @@ class WikiQA:
         # for debugging
         did_shown = []
 
-        # variable for others to access
-        dtext = fgc_data['DTEXT_CN']
-
+        dtext = fgc_data[self.dtext_attr]
         # get IE data for passage
         passage_ie_data = self.nlp.annotate(dtext, properties={'pipelineLanguage': 'zh',
                                                           'ssplit.boundaryTokenRegex': '[。]|[!?！？]+'})
@@ -147,8 +150,8 @@ class WikiQA:
         for q_dict in fgc_data['QUESTIONS']:
 
             # FGC KB runs first if used
-            if use_fgc_kb:
-                matched = self._get_from_fgc_kb(q_dict['QTEXT_CN'])
+            if self.config.use_fgc_kb:
+                matched = self._get_from_fgc_kb(q_dict[self.qtext_attr])
                 if matched is not None:
                     # q_anses = default_answer(q_dict['DID'], 'Wiki-Kb-Inference', _match(q_dict['ATEXT']), 1.0)
                     ans_dict = {
@@ -201,14 +204,14 @@ class WikiQA:
             # for evaluation
             if if_evaluate:
                 try:
-                    answers = [a['ATEXT_CN'] for a in q_dict['ANSWER']]
+                    answers = [a[self.atext_attr] for a in q_dict['ANSWER']]
                 except KeyError:
                     answers = f'NO ANSWER FOR {q_dict["QID"], q_dict["QTYPE"]}'
             else:
                 answers = UNKNOWN_MESSAGE
 
             # variables
-            qtext = q_dict['QTEXT_CN']
+            qtext = q_dict[self.qtext_attr]
 
             # get IE data for question
             # don't add ssplit because there is a bug in CoreNLP: the NERMention tokenStartInSentenceInclusive
@@ -309,11 +312,11 @@ class WikiQA:
         print('(Post-Proc)', processed_datavalues)
 
         # ===== STEP D-E. Extra filtering rules =====
-        processed_datavalues = filter_ans_for_attrs(processed_datavalues, attr, q_dict)
+        processed_datavalues = filter_ans_for_attrs(processed_datavalues, attr, qtext)
 
         # ===== STEP E. Coordinating with Passage =====
         answers = []
-        # rule 3-1: if fuzzy matching datavalue (answer) with passage text (edit distance <= 1) -> generate answer
+        # rule 3-1: if fuzzy matching datavalue (answer) with passage text (edit distance <= 1)
         print('(Match)', end=' ')
         matches = []
         for dvalue_str in processed_datavalues:
@@ -321,6 +324,7 @@ class WikiQA:
             matches.extend(ms)
             print(bool(ms), end=' ')
         print()
+        print('(Passage Match)', [match.group(0) for match in matches])
 
         # rule: filter out the matched span not in supporting evidences (Updated on 1.1)
         print('(Passage Match)', [match.group(0) for match in matches])
