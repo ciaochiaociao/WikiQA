@@ -1,0 +1,18 @@
+version: '3.7'
+
+services:
+  corenlp:
+    image: ciaochiaociao/corenlp_zh:latest
+    ports:
+      - 9001:9000
+    container_name: compose_corenlp
+    command: java -mx8g -cp '*' edu.stanford.nlp.pipeline.StanfordCoreNLPServer -port 9000 -timeout 15000 -serverProperties StanfordCoreNLP-chinese-fgc.properties
+  mongodb:
+    restart: always
+    image: ciaochiaociao/mongodb:0.2
+    ports:
+      - 27020:27020
+    volumes:
+      - /home/fgc34/mongodbdata:/mongodbdata
+    command:  mongod --dbpath /mongodbdata --port 27020 --bind_ip_all
+    container_name: compose_mongodb
