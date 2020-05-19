@@ -17,14 +17,21 @@ cc = OpenCC('t2s')
 cc2 = OpenCC('tw2s')
 cc3 = OpenCC('tw2sp')
 cc_s2t = OpenCC('s2t')
-host = '140.109.19.51'  # localhost
-port = '27020'
 
+# default
+wikidata_ip = 'mongodb://140.109.19.51:27020'
 QUERY_ON_DEMAND = True
-
-client = MongoClient('mongodb://{}:{}'.format(host, port))
-
+client = MongoClient(wikidata_ip)
 CACHE_SIZE = 1024 * 2  # default is only 128
+
+
+def reset_wikidata(**kwargs):
+    global wikidata_ip, client, CACHE_SIZE, QUERY_ON_DEMAND
+
+    client = MongoClient(wikidata_ip)
+    # print(f'Connected to Wikidata MongoDB {wikidata_ip} ...')
+    CACHE_SIZE = kwargs.get('cache_size', CACHE_SIZE)
+    QUERY_ON_DEMAND = kwargs.get('query_on_demand', QUERY_ON_DEMAND)
 
 
 @lru_cache(CACHE_SIZE)
