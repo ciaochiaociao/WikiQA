@@ -28,10 +28,7 @@ from .entity_linking import build_candidates_to_EL, entity_linking, _get_text_fr
 from .predicate_inference_rules import parse_question_by_regex
 from .value2ans import remove_duplicates, longest_answer, match_with_psg, match_type
 
-UNKNOWN_MESSAGE = 'Unknown in evaluation mode (if_evaluate=True)'
-
-# global variables
-prediction_results = []
+UNKNOWN_MESSAGE = 'Unknown in evaluation mode (if_evaluate=False)'
 
 
 def is_span(span):
@@ -113,20 +110,13 @@ class WikiQA:
                 print(answers)
         print(all_answers)
 
-    def predict_on_qs_of_one_doc(self, fgc_data, file4eval: TextIO = None, use_fgc_kb: bool = True, **kwargs) -> List[List[Dict]]:
+    def predict_on_qs_of_one_doc(self, fgc_data) -> List[List[Dict]]:
         """
-        :param bool neural_pred_infer: if using neural model to inference predicate (e.g. PID in wikidata)
         :param Dict fgc_data: fgc data at the level of document, i.e., one document with multiple questions
-        :param bool use_fgc_kb: if using fgc kb to answer before the wiki-based QA module
-        :param TextIO file4eval: the file to save stage-by-stage results for evaluation
-        :param bool neural_pred_infer: default is False
-        :param str use_se: pred or gold or None
-        :return List[List[Dict]]: answers of all questions in this document (an answer is in the format of a `dict`
+        :return List[List[Dict]]: answers of all questions in this document (an answer is in the format of a `dict`)
         """
-        global nlp
-        with CoreNLPClient(endpoint=self.corenlp_ip, annotators="tokenize,ssplit,lemma,pos,ner",
-                           start_server=False) as nlp:
-            return self._predict_on_qs_of_one_doc(fgc_data, file4eval, use_fgc_kb, **kwargs)
+        with self:
+            return self._predict_on_qs_of_one_doc(fgc_data)
 
     def _get_from_fgc_kb(self, qtext):
         if qtext in self.kbqa_sheet:
@@ -147,7 +137,7 @@ class WikiQA:
         dtext = fgc_data['DTEXT_CN']
 
         # get IE data for passage
-        passage_ie_data = nlp.annotate(dtext, properties={'pipelineLanguage': 'zh',
+        passage_ie_data = self.nlp.annotate(dtext, properties={'pipelineLanguage': 'zh',
                                                           'ssplit.boundaryTokenRegex': '[。]|[!?！？]+'})
 
         # output answers
@@ -220,7 +210,7 @@ class WikiQA:
             # don't add ssplit because there is a bug in CoreNLP: the NERMention tokenStartInSentenceInclusive
             # uses the location index in the original text without sentence split rather than with split even with
             # ssplit annotator on
-            question_ie_data = nlp.annotate(qtext,
+            question_ie_data = self.nlp.annotate(qtext,
                                             properties={'ssplit.boundaryTokenRegex': '[。]|[!?！？]+',
                                                         'pipelineLanguage': 'zh'})
 

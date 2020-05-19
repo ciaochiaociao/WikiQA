@@ -67,13 +67,28 @@ for doc in docs:
 
 ## Release Notes
 
-0.1 - Original Release
-0.2 - Add fgc_knowledgebase.json, fgc_kb mode
-0.3 - Refactor WikiQA - 1 
-0.4 - Refactor WikiQA - 2
-0.5 - Refactor WikiQA - 3
-1.0 - Add Supporting Evidence and Neural Predicate Inference, ...
-1.0.2 - Modify Supporting Evidence, ATYPE, AMODE attribute names in json during prediction
-1.0.3 
+* 0.1 - Original Release  
+* 0.2 - Add fgc_knowledgebase.json, fgc_kb mode  
+* 0.3 - Refactor WikiQA - 1  
+* 0.4 - Refactor WikiQA - 2  
+* 0.5 - Refactor WikiQA - 3  
+* 1.0 - Add Supporting Evidence and Neural Predicate Inference, ...  
+* 1.0.2 - Modify Supporting Evidence, ATYPE, AMODE attribute names in json during prediction  
+* 1.0.3   
     - Modify Supporting Evidence, ATYPE, AMODE attribute names in json during prediction Again
     - Add cached wikidata_utils function 
+    
+* 2.0  
+
+    Key Features:
+    - Add 高度, 墓地 and custom 寿命, 成立或建立年份 attributes in parsing question
+    - Fix Entity linking by querying also traditional chinese by converting from simplified one with OpenCC
+    - Facilitate Attribute 名字 Parsing by adding filtering rule that get rids of the answer that has common words with the question 
+    
+    Others:
+    - Add `WikiQAConfig` class
+    - Adapt to dataset format of the version 1.7.13
+      AMODE, ATYPE, SHINT, AMODE_, ATYPE_, SHINT_
+        
+    Overall Performance:
+    32 / 34 = 94.1%

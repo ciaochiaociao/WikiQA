@@ -11,7 +11,7 @@ from ansi.colour import fg, bg
 
 class TeeLogger(object):
 
-    def __init__(self, fpath, mode='w', **kwargs):
+    def __init__(self, fpath, mode='a', **kwargs):
         self.terminal = sys.stdout
         self.log = open(fpath, mode, **kwargs)
 
@@ -24,6 +24,9 @@ class TeeLogger(object):
         #this handles the flush command by doing nothing.
         #you might want to specify some extra behavior here.
         pass
+
+    def close(self):
+        self.log.close()
 
 
 def in_ranges(ix, ranges):

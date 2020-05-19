@@ -20,6 +20,8 @@ gold: Use Gold Supporting Evidence in Dataset
 pred: Use Predicted Supporting Evidence in Overall System (data/raw/predict)
 pred_old: Use Predicted Supporting Evidence in Dataset provided by Meng-Tse (data/raw/1.7.8-revise-sp)
 """)
+argparser.add_argument('--mode', default='dev')
+argparser.add_argument('--quiet', action='store_true')
 argparser.add_argument('--qid_list', nargs='+', default=[])
 
 
@@ -36,10 +38,13 @@ else:
 with open(args.fgc_fpath, encoding='utf-8') as f:
     docs = json.load(f)
 
-wiki_qa = WikiQA(server=args.corenlp_ip, if_evaluate=True)
-
 if args.qid_list:
     docs = get_docs_with_certain_qs(args.qid_list, docs)
+
+wiki_qa = WikiQA(corenlp_ip=args.corenlp_ip, mode=args.mode, file4eval_fpath=args.eval_fpath,
+                 pred_infer=args.pred_infer, use_fgc_kb=args.use_fgc_kb, use_se=args.use_se, verbose=not args.quiet)
+
+wiki_qa.config.to_json_file(args.config_fpath)
 
 wiki_qa.predict_on_docs(docs, args.eval_fpath,
                         neural_pred_infer=neural_pred_infer, use_fgc_kb=args.use_fgc_kb, use_se=args.use_se)

@@ -43,14 +43,14 @@ def evaluate(fgc_fpath, file4eval, fgc_pred_infer_fpath, tee_logger, qids_fpath,
     # statistics
     num_corrects, num_errors, num_answered = len(corrects), len(errors), len(corrects) + len(errors)
     prec = num_corrects / num_answered
-    questions_filtered = list(q_doc_generator(docs))
+    questions_filtered = list(q_doc_generator(docs_pred))
     parsed = df_pred[df_pred.parsed_subj != 'not_parsed']
     questions_has_gold_predicate = df_wiki_pred[df_wiki_pred.label != 'None']
     ent_linked = df_pred[df_pred.sid.notna()]
     traversed = df_pred[(df_pred.pretty_values.notna()) & (df_pred.pretty_values != '[]')]
     matched = df_pred[(df_pred.answers != '[]') & (df_pred.answers.notna())]
     print('# questions trying to answer:', len(questions_filtered))
-    print('# questions that activate WikiQA: {} ({:.1%}) (Parse Q / Predicate Inference) (ratio to ideal: {:.1%})'.format(
+    print('# questions that activate WikiQA: {} ({:.1%}) (Successfully Parsed) (ratio to ideal: {:.1%})'.format(
         len(parsed),
         len(parsed) / len(questions_filtered),
         len(parsed) / len(questions_has_gold_predicate)))
