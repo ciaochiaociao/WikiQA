@@ -151,15 +151,18 @@ class WikiQA:
                 matched = self._get_from_fgc_kb(q_dict['QTEXT_CN'])
                 if matched is not None:
                     # q_anses = default_answer(q_dict['DID'], 'Wiki-Kb-Inference', _match(q_dict['ATEXT']), 1.0)
-                    q_anses = [{
+                    ans_dict = {
                         # 'QID': q_dict['QID'],
                         'AMODULE': 'Wiki-Json-Inference',
                         'ATEXT': matched,
-                        'SCORE': 1.0,
-                        'SCORE_S': 0.0,
-                        'SCORE_E': 0.0,
-                    }]
-                    all_answers.append(q_anses)
+                        'score': 1.0,
+                        'start_score': 0.0,
+                        'end_score': 0.0,
+                    }
+                    all_answers.append(ans_dict)
+                    if self.file4eval:
+                        print(f"{q_dict['QID']}\tmatched_by_json\tmatched_by_json\t\t\t\t\t{matched}",
+                              file=self.file4eval, flush=True)
                     continue
 
             from_amode: Union[List[str], dict] = q_dict['AMODE']
@@ -238,26 +241,26 @@ class WikiQA:
             # transfer to FGC output api format
 
             if final_answer:
-                q_anses = [{
+                ans_dict = {
                     # 'QID': q_dict['QID'],  # for debugging
                     # 'QTEXT': qtext,  # for debugging
                     'AMODULE': 'WikiQA',
                     'ATEXT': final_answer,
-                    'SCORE': 1.0,
-                    'SCORE_S': 0.0,
-                    'SCORE_E': 0.0,
+                    'score': 1.0,
+                    'start_score': 0.0,
+                    'end_score': 0.0,
                     # 'gold': answers  # for debugging
-                }]
+                }
             else:
-                q_anses = [{
-                    'AMODULE': 'WikiQA',
+                ans_dict = {
+                    'AMODULE': 'Wiki-Kb-Inference',
                     'ATEXT': '',
-                    'SCORE': 0.0,
-                    'SCORE_S': 0.0,
-                    'SCORE_E': 0.0
-                }]
+                    'score': 0.0,
+                    'start_score': 0.0,
+                    'end_score': 0.0
+                }
 
-            all_answers.append(q_anses)
+            all_answers.append(ans_dict)
 
         return all_answers
 
