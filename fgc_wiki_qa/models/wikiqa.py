@@ -27,7 +27,7 @@ from .predicate_inference_neural import parse_question_w_neural
 from ..utils.stanfordnlp_utils import snp_pstr, snp_get_ents_by_overlapping_char_span_in_doc
 from ..utils.wikidata_utils import get_fallback_zh_label_from_dict, reset_wikidata
 from ..utils.wikidata4fgc import traverse_by_attr_name, postprocess_datavalue
-from ..config import DEFAULT_CORENLP_IP, FGC_KB_PATH
+from ..config import FGC_KB_PATH
 
 from .entity_linking import build_candidates_to_EL, entity_linking, _get_text_from_token_entity_comp
 from .predicate_inference_rules import parse_question_by_regex
@@ -96,23 +96,136 @@ def filter_ans_for_attrs(processed_datavalues, attr, qtext):
     return processed_datavalues
 
 
+class WikiQAConfig:
+
+    def __init__(self, corenlp_ip='http://140.109.19.51:9000', wikidata_ip='mongodb://140.109.19.51:27020',
+                 amode_topn=1, atype_topn=1, use_se='pred', pred_infer='rule', use_fgc_kb=False, mode='dev',
+                 file4eval_fpath=None, log_file=None, verbose=True):
+        """Configuration Class For WikiQA
+        :param str corenlp_ip:
+        :param str wikidata_ip:
+        :param str amode_topn: top N answer modes
+        :param str atype_topn: top N answer types
+        :param str use_se: 'pred' or 'gold' or 'None'
+        :param bool pred_infer: 'rule' or 'neural' to inference predicate (e.g. PID in wikidata) (default is 'rule')
+        :param bool use_fgc_kb: if using fgc kb to answer before the wiki-based QA module
+        :param str mode: 'dev' or 'prod'
+        :param str file4eval_fpath: the file path to save stage-by-stage results for evaluation
+        :param str log_file: log file path
+        :param bool verbose: True or False for printing on terminal
+        """
+        self.corenlp_ip = corenlp_ip
+        self.wikidata_ip = wikidata_ip
+        self.mode = mode
+        self.verbose = verbose
+        self.amode_topn = amode_topn
+        self.atype_topn = atype_topn
+        self.use_se = use_se
+        self.pred_infer = pred_infer
+        self.use_fgc_kb = use_fgc_kb
+        self.file4eval_fpath = file4eval_fpath
+        self.log_file = log_file
+
+        # mode
+        if self.mode == 'dev':
+            self.if_evaluate = True
+            # default values in dev mode
+            if file4eval_fpath is None:
+                self.file4eval_fpath = 'reports/file4eval.tsv'
+            if log_file is None:
+                self.log_file = 'reports/run.log'
+        elif self.mode == 'prod':
+            self.if_evaluate = False
+            if self.use_se == 'gold':
+                logging.warning('Changed use_se from "gold" to "pred" because gold supporting evidence cannot be used during production mode')
+                self.use_se = 'pred'
+        else:
+            raise ValueError
+
+    def to_dict(self):
+        """Serializes this instance to a Python dictionary."""
+        output = copy.deepcopy(self.__dict__)
+        return output
+
+    def to_json_string(self, indent=2, sort_keys=False, **kwargs):
+        """Serializes this instance to a JSON string."""
+        return json.dumps(self.to_dict(), indent=indent, sort_keys=sort_keys, **kwargs) + "\n"
+
+    def to_json_file(self, json_file_path, **kwargs):
+        """ Save this instance to a json file."""
+        with open(json_file_path, "w", encoding="utf-8") as writer:
+            writer.write(self.to_json_string(**kwargs))
+
+
 class WikiQA:
-    def __init__(self, server=DEFAULT_CORENLP_IP, if_evaluate=False):
-        self.corenlp_ip = server  # 'http://localhost:9000'
-        self.if_evaluate = if_evaluate  # evaluate the performance
+    def __init__(self, config=None, **kwargs):
+        """Wiki Answer Module For FGC
+        Initialize by a WikiQAConfig if provided, or initialize by the keyword arguments otherwise. See argument list
+        in `WikiQAConfig` class
+        """
+        if config:
+            self.config = config
+        else:
+            self.config = WikiQAConfig(**kwargs)
+
+        # CoreNLP Client  (use context manager WikiQASetup to create nlp client by its method __enter__)
+        self.nlp = None
+
+        # Reset Wikidata if necessary, use default settings (host, port, etc.) otherwise
+        if self.config.wikidata_ip:
+            reset_wikidata(wikidata_ip=self.config.wikidata_ip)
 
         # FGC KB
         with open(FGC_KB_PATH, 'r', encoding='utf-8') as f:
             self.kbqa_sheet = json.load(f)
 
-    def predict_on_docs(self, docs, file4eval_fpath, **kwargs):
+        # save results
+        if self.config.file4eval_fpath:
+            self.file4eval = open(self.config.file4eval_fpath, 'w', encoding='utf-8')
+            print('qid\tparsed_subj\tparsed_pred\tsid\tpretty_values\tproc_values\tanswers\tanswer', file=self.file4eval)
+        else:
+            self.file4eval = None
+
+        # variable for others to access according to mode
+        if self.config.mode == 'dev':
+            self.dtext_attr = 'DTEXT_CN'
+            self.qtext_attr = 'QTEXT_CN'
+            self.atext_attr = 'ATEXT_CN'
+        elif self.config.mode == 'prod':
+            self.dtext_attr = 'DTEXT'
+            self.qtext_attr = 'QTEXT'
+
+    def __enter__(self):
+        # setup corenlp
+        # print(f'Connecting to CoreNLP {self.config.corenlp_ip} ...')
+        self.nlp = CoreNLPClient(endpoint=self.config.corenlp_ip, annotators="tokenize,ssplit,lemma,pos,ner",
+                            start_server=False)
+
+        # logging, verbose
+        if self.config.log_file:
+            if self.config.verbose:
+                sys.stdout = TeeLogger(self.config.log_file)
+            else:
+                sys.stdout = open(self.config.log_file, 'a', buffering=1)  # 1 for line-buffering
+        else:
+            if not self.config.verbose:
+                sys.stdout = open('/dev/null', 'w')
+
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if sys.stdout != sys.__stdout__:
+            sys.stdout.close()
+            sys.stdout = sys.__stdout__
+        self.nlp.stop()
+
+    def predict_on_docs(self, docs):
         all_answers = []
-        with open(file4eval_fpath, 'w', encoding='utf-8') as file4eval:
-            print('qid\tparsed_subj\tparsed_pred\tsid\tpretty_values\tproc_values\tanswers\tanswer', file=file4eval)
-            for doc in docs:
-                answers = self.predict_on_qs_of_one_doc(doc, file4eval, **kwargs)
-                all_answers.extend(answers)
-                print(answers)
+
+        for doc in docs:
+            answers = self.predict_on_qs_of_one_doc(doc)
+            all_answers.extend(answers)
+            print(answers)
         print(all_answers)
 
     def predict_on_qs_of_one_doc(self, fgc_data) -> List[List[Dict]]:
@@ -127,14 +240,7 @@ class WikiQA:
         if qtext in self.kbqa_sheet:
             return self.kbqa_sheet[qtext]
 
-    def _predict_on_qs_of_one_doc(self, fgc_data: dict, file4eval, use_fgc_kb: bool = True, amode_topn=1, atype_topn=1,
-                                  **kwargs) -> List[List[Dict]]:
-        # global q_dict, wd_item, rel, attr, predicate_matched, question_ie_data, passage_ie_data, mentions_bracketed, \
-        #     dtext, answers, if_evaluate, qtext, debug_info
-
-        # if the gold answer provided for checking performance
-        if_evaluate = self.if_evaluate
-
+    def _predict_on_qs_of_one_doc(self, fgc_data) -> List[List[Dict]]:
         # for debugging
         did_shown = []
 
@@ -202,8 +308,9 @@ class WikiQA:
                 if self.file4eval:
                     print(q_dict['QID'] + '\tskipped\tskipped\t\t\t\t\t', file=self.file4eval, flush=True)
                 continue
-            # for evaluation
-            if if_evaluate:
+
+            # for evaluation: if the gold answer provided for checking performance
+            if self.config.if_evaluate:
                 try:
                     answers = [a[self.atext_attr] for a in q_dict['ANSWER']]
                 except KeyError:
@@ -245,8 +352,8 @@ class WikiQA:
                 print('(Gold SE)', [(sid, fgc_data['SENTS'][sid]['text']) for sid in fgc_data['QUESTIONS'][0]['SHINT'][0]])
             print('----------')
 
-            final_answer = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval,
-                                        fgc_data['SENTS'], atype_dict, **kwargs)
+            final_answer = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data,
+                                        fgc_data['SENTS'], atype_dict)
 
             # ===== FINISHING STEP =====
             # transfer to FGC output api format
@@ -275,18 +382,21 @@ class WikiQA:
 
         return all_answers
 
-    def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data, file4eval, psg_sents, atype_dict: dict,
-                neural_pred_infer=False, use_se='pred'):
+    def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data, psg_sents, atype_dict: dict):
+        print('predicting ...')
         # ===== STEP A. parse question (parse entity name + predicate inference) =====
-        if neural_pred_infer:
+        if self.config.pred_infer == 'neural':
             parsed_result = parse_question_w_neural(qtext)
-        else:
+        elif self.config.pred_infer == 'rule':
             parsed_result = parse_question_by_regex(qtext)
+        else:
+            raise ValueError
         if parsed_result:
             name, attr, span = parsed_result
             print('(ParseQ)', name, '|', attr)
         else:  # skip this question if not matched by our rules/regex
-            print(q_dict['QID'] + '\tnot_parsed\tnot_parsed\t\t\t\t\t', file=file4eval)
+            if self.file4eval:
+                print(q_dict['QID'] + '\tnot_parsed\tnot_parsed\t\t\t\t\t', file=self.file4eval, flush=True)
             return
         # ===== STEP B. entity linking =====
         ent_link_cands = build_candidates_to_EL(name, question_ie_data, span, attr)
@@ -334,20 +444,8 @@ class WikiQA:
         print('(Passage Match)', [match.group(0) for match in matches])
 
         # rule: filter out the matched span not in supporting evidences (Updated on 1.1)
-        print('(Passage Match)', [match.group(0) for match in matches])
-        if use_se != 'None':
-            if use_se == 'gold':
-                shint_sids = q_dict['SHINT']
-            elif use_se == 'pred':
-                shint_sids = q_dict['SHINT'][0]
-            elif use_se == 'pred_old':
-                shint_sids = q_dict['sp']
-            else:
-                raise ValueError
-            assert isinstance(shint_sids, list)
-            if len(shint_sids):
-                assert isinstance(shint_sids[0], int)
-            print('(INFO) Supporting Evidence', use_se, 'is used')
+        if self.config.use_se != 'None':
+            shint_sids = get_shint_sids(q_dict, self.config.use_se)
             shint_spans = [(psg_sents[sid]['start'], psg_sents[sid]['end']) for sid in shint_sids]
             matches = filter_psg_matches_w_shints(matches, shint_spans)
 
@@ -388,7 +486,7 @@ class WikiQA:
         print('(WikiQA)', final_answer)
 
         # output stage-by-stage results for evaluation
-        if file4eval:
+        if self.file4eval:
             print(q_dict['QID'],
                   name,
                   attr,
@@ -396,7 +494,7 @@ class WikiQA:
                   _pretty_datavalues(datavalues),
                   processed_datavalues,
                   final_answers,
-                  final_answer, sep='\t', file=file4eval, flush=True)
+                  final_answer, sep='\t', file=self.file4eval, flush=True)
 
         return final_answer
 

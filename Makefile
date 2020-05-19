@@ -114,6 +114,7 @@ $(PROC_DATASET_DIR)/toy_all.json: $(PROC_ALL_FPATH)
 PRED_INFER?=rule
 
 EVAL_FPATH=$(EXP_DIR)/file4eval_all.tsv
+CONFIG_FPATH=$(EXP_DIR)/config.json
 
 # examples: make run_exp EXP_DIR=experiments/v1.02_on_1.7.8_revise_sp PRED_INFER=rule FGC_VER=1.7.8-revise-sp RUN_ON=raw USE_SE=pred
 # inputs: EXP_DIR RUN_ON PRED_INFER FGC_VER USE_SE
@@ -144,7 +145,8 @@ $(EVAL_FPATH): $(DATASET_FPATH)
 		--fgc_fpath $< \
 		--pred_infer $(PRED_INFER) \
 		--use_se $(USE_SE) \
-		--eval_fpath $@ | tee $(RUN_LOG)
+		--eval_fpath $@ \
+		--config_fpath $(CONFIG_FPATH) | tee $(RUN_LOG)
 
 
 # inputs: QA_FPATH

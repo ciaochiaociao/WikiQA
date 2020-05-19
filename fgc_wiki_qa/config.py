@@ -23,4 +23,3 @@ FGC_KB_PATH = path.join(cur_path, 'files', 'fgc_knowledgebase.json')  # TODO: to
 DATASET_FPATH = path.join(cur_path, 'files', 'predicate_inference_combined_v2_with_nones.csv')
 TOKENIZER_FPATH = path.join(cur_path, 'files', 'bert-base-chinese-vocab.txt')
 MODEL_FPATH = path.join(cur_path, 'files', 'v2_with_nones_early_stop.h5')
-DEFAULT_CORENLP_IP = 'http://140.109.19.51:9000'
