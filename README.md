@@ -11,7 +11,8 @@ stanfordnlp
 ansi
 pandas
 numpy
-tensorflow
+tensorflow  # only needed if you want to use neural model
+regex
 ```
 2. Wikidata Mongo Database
 3. CoreNLP >= 3.9.2
@@ -90,8 +91,12 @@ from pprint import pprint
 import json
 from fgc_wiki_qa.models.wikiqa import WikiQA
 
-with open('FGC_release_all(cn).json', encoding='utf-8') as f:
-	docs = json.load(f)
+doc = { 'DID': 'D001',
+    'DTEXT': '苏轼（1037年1月8日－1101年8月24日），眉州眉山（今四川省眉山市）人，北宋时著名的文学家、政治家、艺术家、医学家。字子瞻，一字和仲，号东坡居士、铁冠道人。嘉佑二年进士，累官至端明殿学士兼翰林学士，礼>
+    'QUESTIONS': [
+        {'QID': 'D001Q01', 'QTEXT': '苏东坡的爸爸叫什么名字?'},
+    ],
+}
 
 CORENLP_IP = 'http://localhost:9000'
 MONGODB_IP = 'mongodb://140.109.19.51:27020'
@@ -102,9 +107,9 @@ wiki_qa = WikiQA(corenlp_ip=CORENLP_IP,
                 pred_infer='rule',
                 mode='prod',
                 verbose=False)
-for doc in docs:
-    all_answers = wiki_qa.predict_on_qs_of_one_doc(doc)
-    pprint(all_answers)
+
+all_answers = wiki_qa.predict_on_qs_of_one_doc(doc)
+pprint(all_answers)
 ```
 arguments:
  - use_fgc_kb: look up a **cheat sheet** before answering
