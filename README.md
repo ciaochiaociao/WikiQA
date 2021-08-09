@@ -11,13 +11,14 @@ stanfordnlp
 ansi
 pandas
 numpy
+tensorflow
 ```
 2. Wikidata Mongo Database
 3. CoreNLP >= 3.9.2
 
 ## Installation
  - `pip install -r requirements.txt`
- - `scp -r cwhsu@140.109.19.51:/workspace/FGC/WIKIKB4FGC/mongodb_dbpath_wiki_zh> /path/to/mongodbdata`
+ - `scp -r cwhsu@140.109.19.51:~/workspace/FGC/WIKIKB4FGC/mongodb_dbpath_wiki_zh > /path/to/mongodbdata`
  - changing `/path/to/mongodbdata` in `docker-compose.yml` file
  - `sudo docker-compose up  # for setting up Stanford CoreNLP, Wikidata Monogo Database`
 
@@ -93,9 +94,10 @@ with open('FGC_release_all(cn).json', encoding='utf-8') as f:
 	docs = json.load(f)
 
 CORENLP_IP = 'http://localhost:9000'
+MONGODB_IP = 'mongodb://140.109.19.51:27020'
 
-wiki_qa = WikiQA(corenlp_ip='http://140.109.19.51:9000',
-                wikidata_ip='mongodb://140.109.19.51:27020',
+wiki_qa = WikiQA(corenlp_ip=CORENLP_IP,
+                wikidata_ip=MONGODB_IP,
                 use_fgc_kb=True,
                 pred_infer='rule',
                 mode='prod',
