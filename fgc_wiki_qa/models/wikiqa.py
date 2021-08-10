@@ -97,9 +97,22 @@ def filter_ans_for_attrs(processed_datavalues, attr, qtext):
 
 class WikiQAConfig:
 
-    def __init__(self, corenlp_ip='http://140.109.19.51:9000', wikidata_ip='mongodb://140.109.19.51:27020',
-                 amode_topn=1, atype_topn=1, use_se='pred', pred_infer='rule', use_fgc_kb=False, mode='dev',
-                 file4eval_fpath=None, log_file=None, verbose=True):
+    def __init__(self,
+                 corenlp_ip,
+                 wikidata_ip,
+                 amode_topn=1,
+                 atype_topn=1,
+                 use_se='pred',
+                 pred_infer='rule',
+                 neural_model_path=None,
+                 use_fgc_kb=False,
+                 tokenizer_path=None,
+                 dataset_fpath=None,
+                 mode='dev',
+                 file4eval_fpath=None,
+                 log_file=None,
+                 verbose=True,
+            ):
         """Configuration Class For WikiQA
         :param str corenlp_ip:
         :param str wikidata_ip:
@@ -124,6 +137,9 @@ class WikiQAConfig:
         self.use_fgc_kb = use_fgc_kb
         self.file4eval_fpath = file4eval_fpath
         self.log_file = log_file
+        self.neural_model_path = neural_model_path
+        self.tokenizer_path = tokenizer_path
+        self.dataset_fpath = dataset_fpath
 
         # mode
         if self.mode == 'dev':
@@ -177,6 +193,11 @@ class WikiQA:
         # FGC KB
         with open(FGC_KB_PATH, 'r', encoding='utf-8') as f:
             self.kbqa_sheet = json.load(f)
+
+        # Neural Model
+        if self.config.pred_infer == 'neural':
+            from .neural_predicate_inference.predict import NeuralPredicateInferencer
+            self.inferencer = NeuralPredicateInferencer(model_fpath=self.config.neural_model_path, tokenizer_fpath=self.config.tokenizer_path, dataset_fpath=self.config.dataset_fpath)
 
         # save results
         if self.config.file4eval_fpath:
@@ -381,12 +402,12 @@ class WikiQA:
 
         return all_answers
 
-    def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data, psg_sents, atype_dict: dict):
+    def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data, psg_sents, atype_dict: dict, inferencer=None):
         print('predicting ...')
         # ===== STEP A. parse question (parse entity name + predicate inference) =====
         if self.config.pred_infer == 'neural':
             from .predicate_inference_neural import parse_question_w_neural
-            parsed_result = parse_question_w_neural(qtext)
+            parsed_result = parse_question_w_neural(inferencer, qtext)
         elif self.config.pred_infer == 'rule':
             parsed_result = parse_question_by_regex(qtext)
         else:
