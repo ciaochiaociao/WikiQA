@@ -375,12 +375,12 @@ class WikiQA:
 
         return all_answers
 
-    def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data, atype_dict: dict, psg_sents=None, inferencer=None):
+    def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data, atype_dict: dict, psg_sents=None):
         print('predicting ...')
         # ===== STEP A. parse question (parse entity name + predicate inference) =====
         if self.config.pred_infer == 'neural':
             from .predicate_inference_neural import parse_question_w_neural
-            parsed_result = parse_question_w_neural(inferencer, qtext)
+            parsed_result = parse_question_w_neural(self.inferencer, qtext)
         elif self.config.pred_infer == 'rule':
             parsed_result = parse_question_by_regex(qtext)
         else:
