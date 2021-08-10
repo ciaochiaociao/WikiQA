@@ -12,7 +12,6 @@ from ..utils.fgc_utils import get_docs_with_certain_qs
 argparser = ArgumentParser()
 argparser.add_argument('--fgc_fpath')
 argparser.add_argument('--corenlp_ip', default='http://140.109.19.51:9000')
-argparser.add_argument('--use_fgc_kb', action='store_true')
 argparser.add_argument('--pred_infer', default='rule', choices=['rule', 'neural'])
 argparser.add_argument('--use_se', default='pred', choices=['gold', 'pred', 'pred_old', 'None'], help="""
 gold: Use Gold Supporting Evidence in Dataset
@@ -35,7 +34,7 @@ if args.qid_list:
     docs = get_docs_with_certain_qs(args.qid_list, docs)
 
 wiki_qa = WikiQA(corenlp_ip=args.corenlp_ip, mode=args.mode, file4eval_fpath=args.eval_fpath,
-                 pred_infer=args.pred_infer, use_fgc_kb=args.use_fgc_kb, use_se=args.use_se, verbose=not args.quiet)
+                 pred_infer=args.pred_infer, use_se=args.use_se, verbose=not args.quiet)
 
 wiki_qa.config.to_json_file(args.config_fpath)
 

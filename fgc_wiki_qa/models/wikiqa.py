@@ -105,7 +105,6 @@ class WikiQAConfig:
                  use_se='pred',
                  pred_infer='rule',
                  neural_model_path=None,
-                 use_fgc_kb=False,
                  tokenizer_path=None,
                  dataset_fpath=None,
                  mode='dev',
@@ -120,7 +119,6 @@ class WikiQAConfig:
         :param str atype_topn: top N answer types
         :param str use_se: 'pred' or 'gold' or 'None'
         :param bool pred_infer: 'rule' or 'neural' to inference predicate (e.g. PID in wikidata) (default is 'rule')
-        :param bool use_fgc_kb: if using fgc kb to answer before the wiki-based QA module
         :param str mode: 'dev' or 'prod'
         :param str file4eval_fpath: the file path to save stage-by-stage results for evaluation
         :param str log_file: log file path
@@ -134,7 +132,6 @@ class WikiQAConfig:
         self.atype_topn = atype_topn
         self.use_se = use_se
         self.pred_infer = pred_infer
-        self.use_fgc_kb = use_fgc_kb
         self.file4eval_fpath = file4eval_fpath
         self.log_file = log_file
         self.neural_model_path = neural_model_path
@@ -189,10 +186,6 @@ class WikiQA:
         # Reset Wikidata if necessary, use default settings (host, port, etc.) otherwise
         if self.config.wikidata_ip:
             reset_wikidata(wikidata_ip=self.config.wikidata_ip)
-
-        # FGC KB
-        with open(FGC_KB_PATH, 'r', encoding='utf-8') as f:
-            self.kbqa_sheet = json.load(f)
 
         # Neural Model
         if self.config.pred_infer == 'neural':
@@ -256,10 +249,6 @@ class WikiQA:
         with self:
             return self._predict_on_qs_of_one_doc(fgc_data)
 
-    def _get_from_fgc_kb(self, qtext):
-        if qtext in self.kbqa_sheet:
-            return self.kbqa_sheet[qtext]
-
     def _predict_on_qs_of_one_doc(self, fgc_data) -> List[List[Dict]]:
         # for debugging
         did_shown = []
@@ -274,25 +263,6 @@ class WikiQA:
 
         # region questions for-loop [{'QID': ...}, {'QID': ...}, ...]
         for q_dict in fgc_data['QUESTIONS']:
-
-            # FGC KB runs first if used
-            if self.config.use_fgc_kb:
-                matched = self._get_from_fgc_kb(q_dict[self.qtext_attr])
-                if matched is not None:
-                    # q_anses = default_answer(q_dict['DID'], 'Wiki-Kb-Inference', _match(q_dict['ATEXT']), 1.0)
-                    ans_dict = {
-                        # 'QID': q_dict['QID'],
-                        'AMODULE': 'Wiki-Json-Inference',
-                        'ATEXT': matched,
-                        'score': 1.0,
-                        'start_score': 0.0,
-                        'end_score': 0.0,
-                    }
-                    all_answers.append(ans_dict)
-                    if self.file4eval:
-                        print(f"{q_dict['QID']}\tmatched_by_json\tmatched_by_json\t\t\t\t\t{matched}",
-                              file=self.file4eval, flush=True)
-                    continue
 
             if q_dict["QTYPE"] != '申論':
                 from_amode: Union[List[str], dict] = q_dict['AMODE']

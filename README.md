@@ -103,7 +103,6 @@ MONGODB_IP = 'mongodb://140.109.19.51:27020'
 
 wiki_qa = WikiQA(corenlp_ip=CORENLP_IP,
                 wikidata_ip=MONGODB_IP,
-                use_fgc_kb=True,
                 pred_infer='rule',
                 mode='prod',
                 verbose=False)
@@ -112,7 +111,6 @@ all_answers = wiki_qa.predict_on_qs_of_one_doc(doc)
 pprint(all_answers)
 ```
 arguments:
- - use_fgc_kb: look up a **cheat sheet** before answering
  - pred_infer: `rule`/`neural` method to infer predicate (default to rule, which has better precision so far)
  - mode: `prod`/`dev` (e.g. `dev` has access to the gold answer)
  - verbose: show verbose message during prediction
