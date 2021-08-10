@@ -6,9 +6,6 @@ import os
 from os import path
 
 from opencc import OpenCC
-from dotenv import load_dotenv, find_dotenv
-
-# load_dotenv(find_dotenv())
 
 cc = OpenCC('t2s')
 FGC_WIKI_BENCHMARK_FPATH = 'data/external/fgc_wiki_benchmark_v0.1.tsv'
