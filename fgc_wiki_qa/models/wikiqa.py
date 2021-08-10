@@ -26,7 +26,6 @@ from ..utils.fgc_utils import get_doc_with_one_que
 from ..utils.stanfordnlp_utils import snp_pstr, snp_get_ents_by_overlapping_char_span_in_doc
 from ..utils.wikidata_utils import get_fallback_zh_label_from_dict, reset_wikidata
 from ..utils.wikidata4fgc import traverse_by_attr_name, postprocess_datavalue
-from ..config import FGC_KB_PATH
 
 from .entity_linking import build_candidates_to_EL, entity_linking, _get_text_from_token_entity_comp
 from .predicate_inference_rules import parse_question_by_regex
@@ -335,15 +334,19 @@ class WikiQA:
             else:
                 print(snp_pstr(question_ie_data.sentence[0]), end='')
             print('(Gold)', answers)
-            try:  # 1.7.13+
-                print('(Gold SE)', [(sid, fgc_data['SENTS'][sid]['text']) for sid in fgc_data['QUESTIONS'][0]['SHINT_']])
-                print('(Pred SE)', [(sid, fgc_data['SENTS'][sid]['text']) for sid in fgc_data['QUESTIONS'][0]['SHINT'][0]])
-            except KeyError:  # 1.7.12-
-                print('(Gold SE)', [(sid, fgc_data['SENTS'][sid]['text']) for sid in fgc_data['QUESTIONS'][0]['SHINT'][0]])
-            print('----------')
 
-            final_answer = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data,
-                                        fgc_data['SENTS'], atype_dict)
+            if self.config.use_se != 'None':
+                try:  # 1.7.13+
+                    print('(Gold SE)', [(sid, fgc_data['SENTS'][sid]['text']) for sid in fgc_data['QUESTIONS'][0]['SHINT_']])
+                    print('(Pred SE)', [(sid, fgc_data['SENTS'][sid]['text']) for sid in fgc_data['QUESTIONS'][0]['SHINT'][0]])
+                except KeyError:  # 1.7.12-
+                    print('(Gold SE)', [(sid, fgc_data['SENTS'][sid]['text']) for sid in fgc_data['QUESTIONS'][0]['SHINT'][0]])
+                print('----------')
+
+            if self.config.use_se != 'None':
+                final_answer = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data, atype_dict, fgc_data['SENTS'])
+            else:
+                final_answer = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data, atype_dict)
 
             # ===== FINISHING STEP =====
             # transfer to FGC output api format
@@ -372,7 +375,7 @@ class WikiQA:
 
         return all_answers
 
-    def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data, psg_sents, atype_dict: dict, inferencer=None):
+    def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data, atype_dict: dict, psg_sents=None, inferencer=None):
         print('predicting ...')
         # ===== STEP A. parse question (parse entity name + predicate inference) =====
         if self.config.pred_infer == 'neural':
