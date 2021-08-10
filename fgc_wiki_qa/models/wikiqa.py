@@ -23,7 +23,6 @@ from ..utils.utils import TeeLogger
 SetAllowOversizeProtos(True)
 
 from ..utils.fgc_utils import get_doc_with_one_que
-from .predicate_inference_neural import parse_question_w_neural
 from ..utils.stanfordnlp_utils import snp_pstr, snp_get_ents_by_overlapping_char_span_in_doc
 from ..utils.wikidata_utils import get_fallback_zh_label_from_dict, reset_wikidata
 from ..utils.wikidata4fgc import traverse_by_attr_name, postprocess_datavalue
@@ -386,6 +385,7 @@ class WikiQA:
         print('predicting ...')
         # ===== STEP A. parse question (parse entity name + predicate inference) =====
         if self.config.pred_infer == 'neural':
+            from .predicate_inference_neural import parse_question_w_neural
             parsed_result = parse_question_w_neural(qtext)
         elif self.config.pred_infer == 'rule':
             parsed_result = parse_question_by_regex(qtext)
