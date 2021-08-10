@@ -5,3 +5,5 @@ stanfordnlp
 ansi
 pandas
 numpy
+tensorflow
+regex
