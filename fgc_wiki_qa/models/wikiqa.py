@@ -406,7 +406,7 @@ class WikiQA:
 
         return all_answers
 
-    def predict(self, qtext, question_ie_data, dtext=None, passage_ie_data=None, q_dict: dict = None, atype_dict: dict = None, psg_sents: list = None, allow_multi_answers=False):
+    def predict(self, qtext, question_ie_data, dtext=None, passage_ie_data=None, q_dict: dict = None, atype_dict: dict = None, psg_sents: list = None):
         print('predicting ...')
 
         if self.config.use_se != 'None':

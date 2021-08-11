@@ -50,16 +50,14 @@ class NeuralPredicateInferencer:
         self.num_added_toks = self.tokenizer.add_special_tokens(special_tokens_dict)
         print('creating model')
 
-        self.model = BertForSequenceClassification.from_pretrained('bert-base-chinese', num_labels=len(self.all_predicates))
+        self.model = BertForSequenceClassification.from_pretrained(model_fpath)
 
-        self.model.load_weights(model_fpath)
+    # def encode_template(self, template, maxlen=512) -> List[List[int]]:
 
-    def encode_template(self, template, maxlen=512) -> List[List[int]]:
+    #     return self.tokenizer.encode(template, add_special_tokens=True, max_length=maxlen, pad_to_max_length=True, return_tensors='tf')  # arg return_tensors automatically expands to 2D to form a one-example batch
 
-        return self.tokenizer.encode(template, add_special_tokens=True, max_length=maxlen, pad_to_max_length=True, return_tensors='tf')  # arg return_tensors automatically expands to 2D to form a one-example batch
-
-    def predict(self, template):
-        return self.model.predict(self.encode_template(template))[0]
+    def predict(self, template, maxlen=512):
+        return self.model(**self.tokenizer(template, return_tensors='tf', max_length=maxlen, add_special_tokens=True, pad_to_max_length=True)).logits[0]
 
     def predicate_inference(self, template):
         return self.all_predicates[tf.argmax(self.predict(template)).numpy()]

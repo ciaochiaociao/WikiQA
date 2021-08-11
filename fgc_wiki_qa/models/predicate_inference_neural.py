@@ -18,7 +18,8 @@ def parse_question_w_neural(inferencer, qtext):
     except IndexError:
         return False
 
-    # TODO: parse subject
+    # TODO: parse subject, here outputs the whole sentence as the subject to let the following query generator for EL linking to automatically create queries
+    # e.g. The whole sentence will generate the queries of the spans which are NEs.
     subj_span = (0, len(qtext))
     subj = qtext
 
