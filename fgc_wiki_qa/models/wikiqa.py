@@ -102,9 +102,13 @@ class WikiQAConfig:
                  amode_topn=1,
                  atype_topn=1,
                  use_se='pred',
+                 check_atype_w_NE_type=True,
+                 match_in_passage=True,
+                 use_NE_span_in_psg=True,
+                 output_longest_answer=True,
                  pred_infer='rule',
-                 neural_model_path=None,
-                 tokenizer_path=None,
+                 neural_model_fpath=None,
+                 tokenizer_fpath=None,
                  dataset_fpath=None,
                  mode='dev',
                  file4eval_fpath=None,
@@ -133,9 +137,13 @@ class WikiQAConfig:
         self.pred_infer = pred_infer
         self.file4eval_fpath = file4eval_fpath
         self.log_file = log_file
-        self.neural_model_path = neural_model_path
-        self.tokenizer_path = tokenizer_path
+        self.neural_model_fpath = neural_model_fpath
+        self.tokenizer_fpath = tokenizer_fpath
         self.dataset_fpath = dataset_fpath
+        self.check_atype_w_NE_type = check_atype_w_NE_type
+        self.match_in_passage = match_in_passage
+        self.use_NE_span_in_psg = use_NE_span_in_psg
+        self.output_longest_answer = output_longest_answer
 
         # mode
         if self.mode == 'dev':
@@ -189,7 +197,7 @@ class WikiQA:
         # Neural Model
         if self.config.pred_infer == 'neural':
             from .neural_predicate_inference.predict import NeuralPredicateInferencer
-            self.inferencer = NeuralPredicateInferencer(model_fpath=self.config.neural_model_path, tokenizer_fpath=self.config.tokenizer_path, dataset_fpath=self.config.dataset_fpath)
+            self.inferencer = NeuralPredicateInferencer(model_fpath=self.config.neural_model_fpath, tokenizer_fpath=self.config.tokenizer_fpath, dataset_fpath=self.config.dataset_fpath)
 
         # save results
         if self.config.file4eval_fpath:
@@ -230,6 +238,29 @@ class WikiQA:
             sys.stdout.close()
             sys.stdout = sys.__stdout__
         self.nlp.stop()
+
+    def predict_on_q(self, qtext, *args, **kwargs):
+        with self:
+            question_ie_data = self.nlp.annotate(qtext,
+                                            properties={'ssplit.boundaryTokenRegex': '[。]|[!?！？]+',
+                                                        'pipelineLanguage': 'zh'})
+
+            final_answer = self.predict(qtext, question_ie_data, *args, **kwargs)
+
+            return final_answer
+
+    def predict_on_q_doc(self, qtext, dtext, *args, **kwargs):
+        with self:
+            question_ie_data = self.nlp.annotate(qtext,
+                                            properties={'ssplit.boundaryTokenRegex': '[。]|[!?！？]+',
+                                                        'pipelineLanguage': 'zh'})
+            # get IE data for passage
+            passage_ie_data = self.nlp.annotate(dtext, properties={'pipelineLanguage': 'zh',
+                                                            'ssplit.boundaryTokenRegex': '[。]|[!?！？]+'})
+
+            final_answer = self.predict(qtext, question_ie_data, dtext, passage_ie_data, *args, **kwargs)
+
+            return final_answer
 
     def predict_on_docs(self, docs):
         all_answers = []
@@ -344,9 +375,9 @@ class WikiQA:
                 print('----------')
 
             if self.config.use_se != 'None':
-                final_answer = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data, atype_dict, fgc_data['SENTS'])
+                final_answer = self.predict(qtext, question_ie_data, dtext, passage_ie_data, q_dict, atype_dict, fgc_data['SENTS'])
             else:
-                final_answer = self.predict(qtext, q_dict, question_ie_data, dtext, passage_ie_data, atype_dict)
+                final_answer = self.predict(qtext, question_ie_data, dtext, passage_ie_data, q_dict, atype_dict)
 
             # ===== FINISHING STEP =====
             # transfer to FGC output api format
@@ -375,8 +406,12 @@ class WikiQA:
 
         return all_answers
 
-    def predict(self, qtext, q_dict, question_ie_data, dtext, passage_ie_data, atype_dict: dict, psg_sents=None):
+    def predict(self, qtext, question_ie_data, dtext=None, passage_ie_data=None, q_dict: dict = None, atype_dict: dict = None, psg_sents: list = None, allow_multi_answers=False):
         print('predicting ...')
+
+        if self.config.use_se != 'None':
+            assert q_dict is not None
+        
         # ===== STEP A. parse question (parse entity name + predicate inference) =====
         if self.config.pred_infer == 'neural':
             from .predicate_inference_neural import parse_question_w_neural
@@ -390,7 +425,7 @@ class WikiQA:
             print('(ParseQ)', name, '|', attr)
         else:  # skip this question if not matched by our rules/regex
             if self.file4eval:
-                print(q_dict['QID'] + '\tnot_parsed\tnot_parsed\t\t\t\t\t', file=self.file4eval, flush=True)
+                print(q_dict['QID'] if q_dict is not None else 'Q01' + '\tnot_parsed\tnot_parsed\t\t\t\t\t', file=self.file4eval, flush=True)
             return
         # ===== STEP B. entity linking =====
         ent_link_cands = build_candidates_to_EL(name, question_ie_data, span, attr)
@@ -427,48 +462,53 @@ class WikiQA:
 
         # ===== STEP E. Coordinating with Passage =====
         answers = []
-        # rule 3-1: if fuzzy matching datavalue (answer) with passage text (edit distance <= 1)
-        print('(Match)', end=' ')
         matches = []
-        for dvalue_str in processed_datavalues:
-            ms: List[Match] = match_with_psg(dvalue_str, dtext, fuzzy=False)
-            matches.extend(ms)
-            print(bool(ms), end=' ')
-        print()
-        print('(Passage Match)', [match.group(0) for match in matches])
 
-        # rule: filter out the matched span not in supporting evidences (Updated on 1.1)
-        if self.config.use_se != 'None':
-            shint_sids = get_shint_sids(q_dict, self.config.use_se)
-            shint_spans = [(psg_sents[sid]['start'], psg_sents[sid]['end']) for sid in shint_sids]
-            matches = filter_psg_matches_w_shints(matches, shint_spans)
+        # rule 3-1: if fuzzy matching datavalue (answer) with passage text (edit distance <= 1)
+        if self.config.match_in_passage:
+            print('(Match)', end=' ')
+            for dvalue_str in processed_datavalues:
+                ms: List[Match] = match_with_psg(dvalue_str, dtext, fuzzy=False)
+                matches.extend(ms)
+                print(bool(ms), end=' ')
+            print()
+            print('(Passage Match)', [match.group(0) for match in matches])
 
-        # rule: Add matched text to answers (not matcher)
-        answers.extend([match.group(0) for match in matches])
-        print('(Answers 1) (SE Match)', answers)
+            # rule: filter out the matched span not in supporting evidences (Updated on 1.1)
+            if self.config.use_se != 'None':
+                shint_sids = get_shint_sids(q_dict, self.config.use_se)
+                shint_spans = [(psg_sents[sid]['start'], psg_sents[sid]['end']) for sid in shint_sids]
+                matches = filter_psg_matches_w_shints(matches, shint_spans)
 
-        # rule: find the matched NE in the passage
-        mentions = []
-        if matches:
-            for match in matches:
-                mentions.extend(list(snp_get_ents_by_overlapping_char_span_in_doc(match.span(0), passage_ie_data)))
-        print('(NE Exp/Dim)', [mention.entityMentionText for mention in mentions])
+                # rule: Add matched text to answers (not matcher)
+                answers.extend([match.group(0) for match in matches])
+                print('(Answers 1) (SE Match)', answers)
 
-        # rule: match ans type and mention type excluding some predicates
-        # if attr not in ['出生年份', '死亡年份', '成立或建立年份']:
-        mentions = [mention for mention in mentions if match_type(mention, atype_dict.keys(), qtext)]
-        print('(NE-ANS Type Match)', [mention.entityMentionText for mention in mentions])
+            # rule: find the matched NE in the passage
+            if self.config.use_NE_span_in_psg:
+                mentions = []
+                if matches:
+                    for match in matches:
+                        mentions.extend(list(snp_get_ents_by_overlapping_char_span_in_doc(match.span(0), passage_ie_data)))
+                print('(NE Exp/Dim)', [mention.entityMentionText for mention in mentions])
 
-        # rule: Use matched NE (expansion/diminishing) from psg as answers
-        if attr not in ['朝代', '出生年份', '死亡年份', '成立或建立年份']:
-            answers.extend([mention.entityMentionText for mention in mentions])
+                # rule: match ans type and mention type
+                if self.config.check_atype_w_NE_type:
+                    mentions = [mention for mention in mentions if match_type(mention, atype_dict.keys(), qtext)]
+                    print('(NE-ANS Type Match)', [mention.entityMentionText for mention in mentions])
+
+                # Use matched NE (expansion/diminishing) from psg as answers excluding some predicates
+                if attr not in ['朝代', '出生年份', '死亡年份', '成立或建立年份']:
+                    answers.extend([mention.entityMentionText for mention in mentions])
+                else:
+                    print(f'[INFO] NEs are not added to answers for {attr}')
+
+                print('(Answers 2)', answers)
+
+            # rule: add traversed values for '寿命' (no need to match with passage)
+            if attr in ['寿命']:
+                answers.extend(processed_datavalues)
         else:
-            print(f'[INFO] NEs are not added to answers for {attr}')
-
-        print('(Answers 2)', answers)
-
-        # rule: add traversed values for '寿命' (no need to match with passage)
-        if attr in ['寿命']:
             answers.extend(processed_datavalues)
 
         # clean with removing duplicates
@@ -476,21 +516,24 @@ class WikiQA:
         print('(VALID)', final_answers)
 
         # ===== STEP F. Final Decision =====
-        final_answer = longest_answer(final_answers)
-        print('(WikiQA)', final_answer)
+        if self.config.output_longest_answer:
+            output = longest_answer(final_answers)
+        else:
+            output = final_answers
+        print('(WikiQA)', output)
 
         # output stage-by-stage results for evaluation
         if self.file4eval:
-            print(q_dict['QID'],
+            print(q_dict['QID'] if q_dict is not None else 'Q01',
                   name,
                   attr,
                   [i['id'] for i in wd_items],
                   _pretty_datavalues(datavalues),
                   processed_datavalues,
                   final_answers,
-                  final_answer, sep='\t', file=self.file4eval, flush=True)
+                  output, sep='\t', file=self.file4eval, flush=True)
 
-        return final_answer
+        return output
 
 
 def get_shint_sids(q_dict, use_se):

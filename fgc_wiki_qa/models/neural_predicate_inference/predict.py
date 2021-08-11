@@ -52,8 +52,6 @@ class NeuralPredicateInferencer:
 
         self.model = BertForSequenceClassification.from_pretrained('bert-base-chinese', num_labels=len(self.all_predicates))
 
-    # def load_weights(self, model_fpath) -> None:
-        print('loading pretrained model ...')
         self.model.load_weights(model_fpath)
 
     def encode_template(self, template, maxlen=512) -> List[List[int]]:
