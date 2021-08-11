@@ -1,4 +1,4 @@
-name: WikiQA2
+name: WikiQA
 channels:
   - conda-forge
 dependencies:

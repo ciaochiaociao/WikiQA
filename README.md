@@ -2,22 +2,25 @@
 ## Requirements
 
 1. Python
-`python>=3.6.9`
 ```
-click
 opencc-python-reimplemented
 pymongo
 stanfordnlp
 ansi
-pandas
-numpy
 tensorflow  # only needed if you want to use neural model
 regex
+tensorflow-gpu
+pandas
+numpy
+pymongo
+click
+transformers==4.9.2
 ```
 2. Wikidata Mongo Database
 3. CoreNLP >= 3.9.2
 
 ## Installation
+ - `conda env create` at the project folder which will read the environment.yml file
  - `pip install -r requirements.txt`
  - `scp -r cwhsu@140.109.19.51:~/workspace/FGC/WIKIKB4FGC/mongodb_dbpath_wiki_zh > /path/to/mongodbdata`
  - changing `/path/to/mongodbdata` in `docker-compose.yml` file
@@ -42,9 +45,8 @@ fgc_wiki_qa
 │   └── merge.py                                      
 ├── files                                             
 │   ├── bert-base-chinese-vocab.txt                   
-│   ├── fgc_knowledgebase.json                        
 │   ├── predicate_inference_combined_v2_with_nones.csv
-│   └── v2_with_nones_early_stop.h5                   
+│   └── v2_with_nones_early_stop                   
 ├── libs                                              
 │   └── huggingface_utils                             
 │       ├── example.ipynb                             
