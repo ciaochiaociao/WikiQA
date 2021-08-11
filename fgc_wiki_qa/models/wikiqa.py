@@ -192,7 +192,7 @@ class WikiQA:
 
         # Reset Wikidata if necessary, use default settings (host, port, etc.) otherwise
         if self.config.wikidata_ip:
-            reset_wikidata(wikidata_ip=self.config.wikidata_ip)
+            reset_wikidata(ip=self.config.wikidata_ip)
 
         # Neural Model
         if self.config.pred_infer == 'neural':

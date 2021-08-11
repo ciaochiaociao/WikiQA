@@ -25,10 +25,10 @@ client = MongoClient(wikidata_ip)
 CACHE_SIZE = 1024 * 2  # default is only 128
 
 
-def reset_wikidata(**kwargs):
+def reset_wikidata(ip, **kwargs):
     global wikidata_ip, client, CACHE_SIZE, QUERY_ON_DEMAND
-
-    client = MongoClient(wikidata_ip)
+    wikidata_ip = ip
+    client = MongoClient(ip)
     # print(f'Connected to Wikidata MongoDB {wikidata_ip} ...')
     CACHE_SIZE = kwargs.get('cache_size', CACHE_SIZE)
     QUERY_ON_DEMAND = kwargs.get('query_on_demand', QUERY_ON_DEMAND)
