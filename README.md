@@ -22,8 +22,14 @@ transformers==4.9.2
 ## Installation
  - `conda env create` at the project folder which will read the environment.yml file
  - `pip install -r requirements.txt`
- - `scp -r cwhsu@140.109.19.51:~/workspace/FGC/WIKIKB4FGC/mongodb_dbpath_wiki_zh > /path/to/mongodbdata`
+
+## Setup
+
+If you don't have a MongoDB hosting the Wikidata database, follow these steps
+ - download mongodb file to a path, e.g., `scp -r <remote_path> > /path/to/mongodbdata`
  - changing `/path/to/mongodbdata` in `docker-compose.yml` file
+
+The below command will fire up both CoreNLP server and the MongoDB server, but requires the `docker` package and `docker-compose`.
  - `sudo docker-compose up  # for setting up Stanford CoreNLP, Wikidata Monogo Database`
 
 ## Production
@@ -93,23 +99,21 @@ from pprint import pprint
 import json
 from fgc_wiki_qa.models.wikiqa import WikiQA
 
-doc = { 'DID': 'D001',
-    'DTEXT': '苏轼（1037年1月8日－1101年8月24日），眉州眉山（今四川省眉山市）人，北宋时著名的文学家、政治家、艺术家、医学家。字子瞻，一字和仲，号东坡居士、铁冠道人。嘉佑二年进士，累官至端明殿学士兼翰林学士，礼>
-    'QUESTIONS': [
-        {'QID': 'D001Q01', 'QTEXT': '苏东坡的爸爸叫什么名字?'},
-    ],
-}
-
-CORENLP_IP = 'http://localhost:9000'
-MONGODB_IP = 'mongodb://140.109.19.51:27020'
+q = '苏东坡的爸爸叫什么名字?'
+p = '苏轼（1037年1月8日－1101年8月24日），眉州眉山（今四川省眉山市）人，北宋时著名的文学家、政治家、艺术家、医学家。字子瞻，一字和仲，号东坡居士、铁冠道人。嘉佑二年进士，累官至端明殿学士兼翰林学士，礼部尚书。南
+CORENLP_IP = 'http://host:9000'
+MONGODB_IP = 'mongodb://host:27020'
 
 wiki_qa = WikiQA(corenlp_ip=CORENLP_IP,
                 wikidata_ip=MONGODB_IP,
                 pred_infer='rule',
                 mode='prod',
-                verbose=False)
-
-all_answers = wiki_qa.predict_on_qs_of_one_doc(doc)
+                check_atype_w_NE_type=False,
+                match_in_passage=True,
+                use_NE_span_in_psg=True,
+                use_se='None',
+                verbose=True)
+all_answers = wiki_qa.predict_on_q_doc(q, p)
 pprint(all_answers)
 ```
 arguments:
