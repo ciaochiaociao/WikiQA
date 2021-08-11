@@ -1,9 +1,4 @@
-click
 opencc-python-reimplemented
 pymongo
 stanfordnlp
 ansi
-pandas
-numpy
-tensorflow
-regex

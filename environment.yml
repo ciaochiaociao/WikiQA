@@ -1,0 +1,12 @@
+name: WikiQA2
+channels:
+  - conda-forge
+dependencies:
+  - python=3
+  - regex
+  - tensorflow-gpu
+  - pandas
+  - numpy
+  - pymongo
+  - click
+  - transformers=4.9.2
